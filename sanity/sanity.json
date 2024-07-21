@@ -1,0 +1,24 @@
+{
+  "root": true,
+  "project": {
+    "name": "ExpenseTracker",
+    "basePath": "/"
+  },
+  "api": {
+    "projectId": "8kbdyotb",
+    "dataset": "production"
+  },
+  "plugins": [],
+  "env": {
+    "development": {
+      "plugins": []
+    },
+    "staging": {
+      "plugins": []
+    },
+    "production": {
+      "plugins": []
+    }
+  },
+  "parts": []
+}

@@ -12,59 +12,48 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RouteProp, CommonActions } from "@react-navigation/native";
-import sanityClient from "../api/sanityClient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { RootStackParamList } from "../types";
-import { useDispatch } from "react-redux";
-import { setLogin } from "../store/userSlice";
+import { RouteProp } from "@react-navigation/native";
+import client from "../api/sanityClient";
 
-type LoginScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  "Login"
->;
-type LoginScreenRouteProp = RouteProp<RootStackParamList, "Login">;
-
-type Props = {
-  navigation: LoginScreenNavigationProp;
-  route: LoginScreenRouteProp;
+type RootStackParamList = {
+  Signup: undefined;
+  Login: undefined;
 };
 
-const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const dispatch = useDispatch();
+type SignupScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "Signup"
+>;
+type SignupScreenRouteProp = RouteProp<RootStackParamList, "Signup">;
+
+type Props = {
+  navigation: SignupScreenNavigationProp;
+  route: SignupScreenRouteProp;
+};
+
+const SignupScreen: React.FC<Props> = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      setError("Please fill in all fields");
-      return;
-    }
-    console.log("Attempting login with:", username); // ユーザー名でログインを試みていることをログに記録
-    try {
-      const query = `*[_type == "user" && username == $username && password == $password]`;
-      const params = { username, password };
-      console.log("Fetching user with params:", params); // クエリ実行前にパラメータをログ出力
-      const result = await sanityClient.fetch(query, params);
-      console.log("Login result:", result); // ログイン結果をログ出力
-      if (result.length > 0) {
-        await AsyncStorage.setItem("userToken", "yourGeneratedTokenHere");
-        await AsyncStorage.setItem("userId", result[0]._id);
-        dispatch(setLogin(result[0]));
-        console.log("Dispatching navigation reset to DrawerNavigator"); // ナビゲーションリセットのディスパッチをログ出力
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: "DrawerNavigator" }],
-          })
-        );
-      } else {
-        setError("Invalid username or password");
+  const handleSignup = async () => {
+    if (username && password && email) {
+      try {
+        await client.create({
+          _type: "user",
+          username,
+          password, // 実際にはパスワードをハッシュ化して保存する
+          email,
+        });
+        setError("");
+        navigation.navigate("Login");
+      } catch (err) {
+        setError("An error occurred during signup.");
+        console.error(err);
       }
-    } catch (err) {
-      console.error("An error occurred during login:", err);
-      setError("An error occurred during login.");
+    } else {
+      setError("Please fill in all fields");
     }
   };
 
@@ -81,6 +70,16 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.logo}
           />
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <View style={styles.inputContainer}>
+            <Ionicons name="mail-outline" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholderTextColor="#666"
+            />
+          </View>
           <View style={styles.inputContainer}>
             <Ionicons name="person-outline" size={20} color="#666" />
             <TextInput
@@ -102,15 +101,15 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               placeholderTextColor="#666"
             />
           </View>
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Log In</Text>
+          <TouchableOpacity style={styles.button} onPress={handleSignup}>
+            <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => navigation.navigate("Signup")}
+            onPress={() => navigation.navigate("Login")}
             style={{ marginTop: 20 }}
           >
             <Text style={{ color: "#778899" }}>
-              Don't have an account? Sign Up
+              Already have an account? Log In
             </Text>
           </TouchableOpacity>
         </View>
@@ -167,4 +166,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default SignupScreen;
