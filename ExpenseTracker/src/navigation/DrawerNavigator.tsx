@@ -1,24 +1,27 @@
 import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
+import { useNavigation, DrawerActions } from "@react-navigation/native";
 import MainScreens from "./MainScreens";
 import CustomDrawerContent from "../components/CustomDrawerContent";
 import HeaderRightButton from "../components/HeaderRightButton";
-import { DrawerParamList, RootStackScreenProps } from "../types";
+import { DrawerParamList } from "../types";
+import { Ionicons } from "@expo/vector-icons";
+import { TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
-type DrawerNavigatorProps = RootStackScreenProps<"DrawerNavigator">;
+function DrawerNavigator() {
+  const navigation = useNavigation();
 
-function DrawerNavigator({ navigation }: DrawerNavigatorProps) {
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerBackground: () => (
           <LinearGradient
             colors={["#EAD9FF", "#6495ED", "#A4C6FF"]}
-            start={{ x: 0.01, y: 0.9 }}
+            start={{ x: 0.2, y: 1.5 }}
             end={{ x: 1, y: 0.06 }}
             style={{ flex: 1 }}
           />
@@ -29,35 +32,25 @@ function DrawerNavigator({ navigation }: DrawerNavigatorProps) {
           fontWeight: "bold",
           fontSize: 20,
         },
-        headerStyle: {
-          borderBottomWidth: 0,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        headerBackgroundContainerStyle: {
-          flex: 1,
-          marginBottom: -1,
-        },
-        drawerLabelStyle: {
-          display: "none",
-        },
-        sceneContainerStyle: {
-          backgroundColor: "transparent",
-        },
-        drawerStyle: {
-          backgroundColor: "transparent",
-          width: "80%",
-        },
-        drawerType: "front",
-        overlayColor: "rgba(0,0,0,0.7)",
-      }}
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+          >
+            <Ionicons
+              name="menu"
+              size={28}
+              color="white"
+              style={{ marginLeft: 15 }}
+            />
+          </TouchableOpacity>
+        ),
+      })}
     >
       <Drawer.Screen
         name="MainScreens"
         component={MainScreens}
         options={{
           title: "ExpenseTracker",
-          headerTitle: "ExpenseTracker",
         }}
       />
     </Drawer.Navigator>

@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from "../store/store";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 import moment from "moment";
+import I18n from "../utils/i18n";
 
 type Transaction = {
   _id: string;
@@ -75,10 +76,11 @@ function HomeScreen({ navigation }: Props) {
 
   const addTransactionHandler = async () => {
     if (inputValue.trim() === "") {
-      Alert.alert("金額を入力してください");
+      Alert.alert((I18n as any).t("enterAmount"));
       return;
     }
-    const nameToSave = itemName.trim() === "" ? "未記入" : itemName;
+    const nameToSave =
+      itemName.trim() === "" ? (I18n as any).t("unspecified") : itemName;
     const transaction = {
       _type: "transaction",
       title: `${nameToSave}: ${inputValue}円`,
@@ -88,11 +90,17 @@ function HomeScreen({ navigation }: Props) {
     try {
       const createdTransaction = await client.create(transaction);
       dispatch(addTransaction(createdTransaction));
-      Toast.show({ type: "success", text1: "追加しました" });
+      Toast.show({
+        type: "success",
+        text1: (I18n as any).t("amountAddedSuccess"),
+      });
       setInputValue("");
       setItemName("");
     } catch (error) {
-      Toast.show({ type: "error", text1: "追加に失敗しました" });
+      Toast.show({
+        type: "error",
+        text1: (I18n as any).t("amountAddedFailed"),
+      });
       console.error("Error adding transaction:", error);
     }
   };
@@ -122,12 +130,12 @@ function HomeScreen({ navigation }: Props) {
         <Text style={styles.date}>{todayDate}</Text>
         <Text style={styles.totalAmount}>¥{Math.floor(totalToday) || 0}</Text>
         <Text style={styles.inputDisplay}>
-          追加する金額:{" "}
+          {(I18n as any).t("amountToAdd")}{" "}
           <Text style={styles.inputValue}>¥{inputValue || 0}</Text>
         </Text>
         <TextInput
           style={styles.input}
-          placeholder="追加するもの"
+          placeholder={(I18n as any).t("addItemPlaceholder")}
           value={itemName}
           onChangeText={setItemName}
           placeholderTextColor="#D7EEFF"
@@ -140,7 +148,7 @@ function HomeScreen({ navigation }: Props) {
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
           >
-            <Text style={styles.buttonText}>追加</Text>
+            <Text style={styles.buttonText}>{(I18n as any).t("add")}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>

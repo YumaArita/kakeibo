@@ -1,12 +1,17 @@
 import { createClient } from "@sanity/client";
+import {
+  SANITY_PROJECT_ID,
+  SANITY_DATASET,
+  SANITY_TOKEN,
+  SANITY_API_VERSION,
+} from "@env";
 
 const client = createClient({
-  projectId: "8kbdyotb", // SanityのプロジェクトID
-  dataset: "production", // 使用するデータセット
-  useCdn: false, // 高速な読み取りアクセスのためにCDNを使用しない
-  token:
-    "skCtZ4fu9bZUP0Venaz0pbk8x7ICh1zRofwzXWt1Xzps8e5mbqtaf7dQ3l1YEeeqb0zaHOYdNSIDekGwtk5N2kmyJnWs4tk7wApnp75mW4SzwdSIYlBPoEL66KuDILwe2dLDv1B802TgJndRLFuGWNs4a6PBittLU7XSrykzk9bZQvY0Lqrn",
-  apiVersion: "2023-07-15", // 使用するSanity APIのバージョン
+  projectId: SANITY_PROJECT_ID,
+  dataset: SANITY_DATASET,
+  useCdn: false,
+  token: SANITY_TOKEN,
+  apiVersion: SANITY_API_VERSION,
 });
 
 export default client;

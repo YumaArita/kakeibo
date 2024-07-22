@@ -1,18 +1,16 @@
-import {defineType} from 'sanity'
-
-export default defineType({
+export default {
   name: 'user',
   title: 'User',
   type: 'document',
   fields: [
     {
-      name: 'username',
-      title: 'Username',
+      name: 'userId',
+      title: 'User ID',
       type: 'string',
     },
     {
-      name: 'password',
-      title: 'Password',
+      name: 'username',
+      title: 'Username',
       type: 'string',
     },
     {
@@ -20,5 +18,10 @@ export default defineType({
       title: 'Email',
       type: 'string',
     },
+    {
+      name: 'password',
+      title: 'Password',
+      type: 'string',
+    },
   ],
-})
+}

@@ -11,7 +11,6 @@ export type RootStackParamList = {
 
 export type DrawerParamList = {
   MainScreens: NavigatorScreenParams<TabParamList>;
-  // 他のドロワー画面があればここに追加
 };
 
 export type TabParamList = {

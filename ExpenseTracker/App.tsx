@@ -4,7 +4,10 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { store } from "./src/store/store";
 import { Provider } from "react-redux";
 import * as Font from "expo-font";
-import AppLoading from "expo-app-loading";
+import * as SplashScreen from "expo-splash-screen";
+import { setI18nConfig } from "./src/utils/i18n";
+
+SplashScreen.preventAutoHideAsync();
 
 const loadFonts = () => {
   return Font.loadAsync({
@@ -12,17 +15,32 @@ const loadFonts = () => {
   });
 };
 
-export default function App() {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+function App() {
+  const [appIsReady, setAppIsReady] = useState(false);
 
-  if (!fontsLoaded) {
-    return (
-      <AppLoading
-        startAsync={loadFonts}
-        onFinish={() => setFontsLoaded(true)}
-        onError={console.warn}
-      />
-    );
+  useEffect(() => {
+    async function prepare() {
+      try {
+        await setI18nConfig();
+        await loadFonts();
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  useEffect(() => {
+    if (appIsReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
   }
 
   return (
@@ -31,3 +49,5 @@ export default function App() {
     </Provider>
   );
 }
+
+export default App;

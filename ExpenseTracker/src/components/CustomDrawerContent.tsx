@@ -19,12 +19,12 @@ import { Ionicons } from "@expo/vector-icons";
 import client from "../api/sanityClient";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
+import I18n from "../utils/i18n";
 
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const transactions = useSelector(selectTransactions);
   const dispatch = useDispatch();
 
-  // 今日の日付を取得
   const today = new Date().toISOString().split("T")[0];
 
   const handleDelete = async (id: string) => {
@@ -33,15 +33,13 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       dispatch(removeTransaction(id));
       Toast.show({
         type: "success",
-        text1: "削除完了",
-        text2: "トランザクションが正常に削除されました。",
+        text1: (I18n as any).t("successDelete"),
       });
     } catch (error) {
       console.error("Failed to delete transaction", error);
       Toast.show({
         type: "error",
-        text1: "エラー",
-        text2: "トランザクションの削除に失敗しました。",
+        text1: (I18n as any).t("error"),
       });
     }
   };
@@ -58,7 +56,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         contentContainerStyle={styles.drawerContent}
       >
         <View style={styles.transactionContainer}>
-          <Text style={styles.transactionTitle}>本日追加したもの</Text>
+          <Text style={styles.transactionTitle}>
+            {(I18n as any).t("addedToday")}
+          </Text>
           <ScrollView>
             {transactions
               .filter((transaction) => transaction.date.split("T")[0] === today)
