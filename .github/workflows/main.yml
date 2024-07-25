@@ -55,6 +55,11 @@ jobs:
           cd ExpenseTracker
           npx expo install expo-modules-core expo-dev-client -- --legacy-peer-deps
 
+      - name: Prebuild Expo project
+        run: |
+          cd ExpenseTracker
+          npx expo prebuild
+
       - name: Install CocoaPods dependencies
         run: |
           cd ExpenseTracker/ios
