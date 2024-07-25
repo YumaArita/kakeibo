@@ -14,7 +14,8 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 
   if (__DEV__) {
     // 開発環境
-    const devHostUrl = Constants.manifest?.hostUri ?? "192.168.1.5:8081";
+    const devHostUrl =
+      (Constants.manifest as any)?.hostUri ?? "192.168.1.5:8081";
     verificationLink = `exp://${devHostUrl}/--/verify?token=${token}`;
   } else {
     // 本番環境

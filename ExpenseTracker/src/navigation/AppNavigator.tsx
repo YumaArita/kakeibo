@@ -116,7 +116,9 @@ const AppNavigatorContent = () => {
   const isDevEnvironment = Constants.appOwnership === "expo";
   const testToken =
     "eyJlbWFpbCI6Inl1bWFfc3lva29yYUBpY2xvdWQuY29tIiwiZXhwIjoxNzIxODM0NDc2fQ==.8ea711f13b19dc8f8f64a331ab74389ed3382ba830b3fae33222da9629d0efd8";
-  const devTestUrl = `exp://${Constants.manifest?.hostUri}/--/verify?token=${testToken}`;
+  const devTestUrl = `exp://${
+    (Constants.manifest as any)?.hostUri
+  }/--/verify?token=${testToken}`;
   const prodTestUrl = `expensetracker://verify?token=${testToken}`;
 
   return (
