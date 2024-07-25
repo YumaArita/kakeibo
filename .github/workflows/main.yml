@@ -47,7 +47,9 @@ jobs:
           npm install --legacy-peer-deps
 
       - name: Install Expo modules
-        run: npx expo install expo-modules-core -- --legacy-peer-deps
+        run: |
+          cd  ExpenseTracker
+          npx expo install expo-modules-core -- --legacy-peer-deps
 
       - name: Install CocoaPods dependencies
         run: |
