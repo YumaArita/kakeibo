@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Text,
   Alert,
@@ -17,6 +17,7 @@ import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 import moment from "moment";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { debounce } from "lodash";
 
 type Transaction = {
   _id: string;
@@ -102,6 +103,14 @@ function HomeScreen({ navigation }: Props) {
     }
   };
 
+  const debouncedAddTransactionHandler = useCallback(
+    debounce(addTransactionHandler, 1000, {
+      leading: true,
+      trailing: false,
+    }),
+    [inputValue, itemName]
+  );
+
   const handlePressIn = () => {
     Animated.spring(scaleValue, {
       toValue: 0.95,
@@ -141,7 +150,7 @@ function HomeScreen({ navigation }: Props) {
         <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
           <TouchableOpacity
             style={styles.button}
-            onPress={addTransactionHandler}
+            onPress={debouncedAddTransactionHandler}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
           >

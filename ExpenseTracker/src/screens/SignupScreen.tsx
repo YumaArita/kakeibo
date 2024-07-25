@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import SHA256 from "crypto-js/sha256";
 import { enc } from "crypto-js";
 import { generateVerificationToken } from "../utils/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { debounce } from "lodash";
 
 type Props = {
   navigation: NavigationProp<ParamListBase>;
@@ -80,6 +81,14 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const debouncedHandleSignup = useCallback(
+    debounce(handleSignup, 1000, {
+      leading: true,
+      trailing: false,
+    }),
+    [username, password, email]
+  );
+
   return (
     <LinearGradient
       colors={["#EAD9FF", "#6495ED", "#A4C6FF"]}
@@ -122,7 +131,10 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
             }}
             secureTextEntry
           />
-          <TouchableOpacity style={styles.button} onPress={handleSignup}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={debouncedHandleSignup}
+          >
             <Text style={styles.buttonText}>サインアップ</Text>
           </TouchableOpacity>
         </ScrollView>

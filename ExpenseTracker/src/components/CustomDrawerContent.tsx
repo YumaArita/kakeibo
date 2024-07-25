@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import client from "../api/sanityClient";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { debounce } from "lodash";
 
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -69,6 +70,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     }
   };
 
+  const debouncedHandleDelete = useCallback(debounce(handleDelete, 1000), []);
+
   return (
     <LinearGradient
       colors={["#EAD9FF", "#6495ED", "#A4C6FF"]}
@@ -97,7 +100,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => handleDelete(transaction._id)}
+                    onPress={() => debouncedHandleDelete(transaction._id)}
                     style={styles.deleteButton}
                   >
                     <Ionicons name="trash-outline" size={20} color="#A4C6FF" />

@@ -15,6 +15,7 @@ import { setLanguage, getLanguage } from "../utils/language";
 import { getUserId } from "../utils/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import SHA256 from "crypto-js/sha256";
+import { debounce } from "lodash";
 
 type Props = {
   navigation: NavigationProp<ParamListBase>;
@@ -74,6 +75,11 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const debouncedUpdateUsername = debounce(handleUpdateUsername, 1000, {
+    leading: true,
+    trailing: false,
+  });
+
   const handleUpdateEmail = async () => {
     if (!validateEmail(email)) {
       Alert.alert("有効なメールアドレスを入力してください");
@@ -95,6 +101,11 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert("ユーザーIDが見つかりません");
     }
   };
+
+  const debouncedUpdateEmail = debounce(handleUpdateEmail, 1000, {
+    leading: true,
+    trailing: false,
+  });
 
   const handleUpdatePassword = async () => {
     if (!password.trim()) {
@@ -122,6 +133,11 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert("ユーザーIDが見つかりません");
     }
   };
+
+  const debouncedUpdatePassword = debounce(handleUpdatePassword, 1000, {
+    leading: true,
+    trailing: false,
+  });
 
   const handleSaveLanguage = async () => {
     await setLanguage(language);
@@ -152,7 +168,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           />
           <TouchableOpacity
             style={styles.button}
-            onPress={handleUpdateUsername}
+            onPress={debouncedUpdateUsername}
           >
             <Text style={styles.buttonText}>ユーザー名変更</Text>
           </TouchableOpacity>
@@ -165,7 +181,10 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             value={email}
             onChangeText={setEmail}
           />
-          <TouchableOpacity style={styles.button} onPress={handleUpdateEmail}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={debouncedUpdateEmail}
+          >
             <Text style={styles.buttonText}>メールアドレスの変更</Text>
           </TouchableOpacity>
 
@@ -179,7 +198,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           />
           <TouchableOpacity
             style={styles.button}
-            onPress={handleUpdatePassword}
+            onPress={debouncedUpdatePassword}
           >
             <Text style={styles.buttonText}>パスワードを更新</Text>
           </TouchableOpacity>

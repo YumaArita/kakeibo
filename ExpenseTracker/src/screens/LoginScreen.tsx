@@ -20,6 +20,7 @@ import { useDispatch } from "react-redux";
 import { setLogin } from "../store/userSlice";
 import { LinearGradient } from "expo-linear-gradient";
 import SHA256 from "crypto-js/sha256";
+import { debounce } from "lodash";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -74,6 +75,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const debouncedHandleLogin = debounce(handleLogin, 1000, {
+    leading: true,
+    trailing: false,
+  });
+
   return (
     <LinearGradient
       colors={["#EAD9FF", "#6495ED", "#A4C6FF"]}
@@ -91,6 +97,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             source={require("../../assets/logo.png")}
             style={styles.logo}
           />
+          <Text style={styles.logolabel}>TBOSET</Text>
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={20} color="#666" />
@@ -115,7 +122,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               placeholderTextColor="#666"
             />
           </View>
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={debouncedHandleLogin}
+          >
             <Text style={styles.buttonText}>ログイン</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -143,6 +153,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
+    fontFamily: "CuteFont", // Custom font
     fontSize: 32,
     color: "#ffffff",
     marginBottom: 20,
@@ -150,9 +161,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   logo: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+    width: 280,
+    height: 280,
+    marginBottom: -33,
+  },
+  logolabel: {
+    fontFamily: "CuteFont",
+    fontSize: 40,
+    color: "#ffffff",
+    marginBottom: 35,
   },
   errorText: {
     color: "red",
