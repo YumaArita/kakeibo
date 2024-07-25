@@ -19,14 +19,18 @@ jobs:
           node-version: "16"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: |
+          cd ExpenseTracker
+          npm install --legacy-peer-deps
 
       - name: Install Expo modules
-        run: npx expo install expo-modules-core
+        run: |
+          cd ExpenseTracker
+          npx expo install expo-modules-core expo-dev-client
 
       - name: Build Android
         run: |
-          cd android
+          cd ExpenseTracker/android
           ./gradlew assembleRelease
 
   build-ios:
@@ -48,8 +52,8 @@ jobs:
 
       - name: Install Expo modules
         run: |
-          cd  ExpenseTracker
-          npx expo install expo-modules-core -- --legacy-peer-deps
+          cd ExpenseTracker
+          npx expo install expo-modules-core expo-dev-client -- --legacy-peer-deps
 
       - name: Install CocoaPods dependencies
         run: |
@@ -58,8 +62,10 @@ jobs:
 
       - name: Build iOS
         run: |
-          xcodebuild -workspace ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive
+          cd ExpenseTracker
+          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive
 
       - name: Export IPA
         run: |
+          cd ExpenseTracker
           xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist ios/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
