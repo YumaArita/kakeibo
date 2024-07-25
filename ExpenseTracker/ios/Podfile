@@ -38,6 +38,4 @@ target 'ExpenseTracker' do
   
   # Add new pods below this line
 
-  use_expo_modules!
-
 end
