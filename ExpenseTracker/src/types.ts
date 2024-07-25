@@ -7,6 +7,7 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<DrawerParamList>;
   DrawerNavigator: undefined;
   Signup: undefined;
+  Verify: { token: string };
 };
 
 export type DrawerParamList = {

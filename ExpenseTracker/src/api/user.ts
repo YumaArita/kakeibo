@@ -16,7 +16,7 @@ export const updateUserProfileByUserId = async (
   userId: string,
   username: string,
   email: string,
-  password: string
+  hashedPassword: string
 ) => {
   try {
     const query = `*[_type == "user" && _id == $userId]`;
@@ -25,7 +25,7 @@ export const updateUserProfileByUserId = async (
     if (user && user[0] && user[0]._id) {
       await client
         .patch(user[0]._id)
-        .set({ username, email, password })
+        .set({ username, email, password: hashedPassword })
         .commit();
       return { success: true };
     } else {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
@@ -10,13 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { NavigationProp, ParamListBase } from "@react-navigation/native";
 import { getUserProfileByUserId, updateUserProfileByUserId } from "../api/user";
 import { setLanguage, getLanguage } from "../utils/language";
 import { getUserId } from "../utils/auth";
 import { LinearGradient } from "expo-linear-gradient";
-import I18n from "../utils/i18n";
+import SHA256 from "crypto-js/sha256";
 
 type Props = {
   navigation: NavigationProp<ParamListBase>;
@@ -56,7 +54,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleUpdateUsername = async () => {
     if (!username.trim()) {
-      Alert.alert((I18n as any).t("enterUsername"));
+      Alert.alert("ユーザー名を入力してください");
       return;
     }
     if (userId) {
@@ -67,18 +65,18 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
         password
       );
       if (result.success) {
-        Alert.alert((I18n as any).t("usernameUpdated"));
+        Alert.alert("ユーザー名が更新されました");
       } else {
-        Alert.alert((I18n as any).t("usernameUpdateFailed"));
+        Alert.alert("ユーザー名の更新に失敗しました");
       }
     } else {
-      Alert.alert((I18n as any).t("userIdNotFound"));
+      Alert.alert("ユーザーIDが見つかりません");
     }
   };
 
   const handleUpdateEmail = async () => {
     if (!validateEmail(email)) {
-      Alert.alert((I18n as any).t("enterValidEmail"));
+      Alert.alert("有効なメールアドレスを入力してください");
       return;
     }
     if (userId) {
@@ -89,44 +87,45 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
         password
       );
       if (result.success) {
-        Alert.alert((I18n as any).t("emailUpdated"));
+        Alert.alert("メールアドレスが更新されました");
       } else {
-        Alert.alert((I18n as any).t("emailUpdateFailed"));
+        Alert.alert("メールアドレスの更新に失敗しました");
       }
     } else {
-      Alert.alert((I18n as any).t("userIdNotFound"));
+      Alert.alert("ユーザーIDが見つかりません");
     }
   };
 
   const handleUpdatePassword = async () => {
     if (!password.trim()) {
-      Alert.alert((I18n as any).t("enterPassword"));
+      Alert.alert("パスワードを入力してください");
       return;
     }
     if (password.length < 8) {
-      Alert.alert((I18n as any).t("passwordMinLength"));
+      Alert.alert("パスワードは8文字以上である必要があります");
       return;
     }
     if (userId) {
+      const hashedPassword = SHA256(password).toString();
       const result = await updateUserProfileByUserId(
         userId,
         username,
         email,
-        password
+        hashedPassword
       );
       if (result.success) {
-        Alert.alert((I18n as any).t("passwordUpdated"));
+        Alert.alert("パスワードが更新されました");
       } else {
-        Alert.alert((I18n as any).t("passwordUpdateFailed"));
+        Alert.alert("パスワードの更新に失敗しました");
       }
     } else {
-      Alert.alert((I18n as any).t("userIdNotFound"));
+      Alert.alert("ユーザーIDが見つかりません");
     }
   };
 
   const handleSaveLanguage = async () => {
     await setLanguage(language);
-    Alert.alert((I18n as any).t("languageUpdated"));
+    Alert.alert("言語が更新されました");
   };
 
   return (
@@ -141,13 +140,13 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>{(I18n as any).t("settings")}</Text>
+          <Text style={styles.title}>設定</Text>
 
-          <Text style={styles.label}>{(I18n as any).t("currentUsername")}</Text>
+          <Text style={styles.label}>現在のユーザー名</Text>
           <Text style={styles.currentValue}>{username}</Text>
           <TextInput
             style={styles.input}
-            placeholder={(I18n as any).t("newUsername")}
+            placeholder="新しいユーザー名"
             value={username}
             onChangeText={setUsername}
           />
@@ -155,29 +154,25 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.button}
             onPress={handleUpdateUsername}
           >
-            <Text style={styles.buttonText}>
-              {(I18n as any).t("changeUsername")}
-            </Text>
+            <Text style={styles.buttonText}>ユーザー名変更</Text>
           </TouchableOpacity>
 
-          <Text style={styles.label}>{(I18n as any).t("currentEmail")}</Text>
+          <Text style={styles.label}>現在のメールアドレス</Text>
           <Text style={styles.currentValue}>{email}</Text>
           <TextInput
             style={styles.input}
-            placeholder={(I18n as any).t("newEmail")}
+            placeholder="新しいメールアドレス"
             value={email}
             onChangeText={setEmail}
           />
           <TouchableOpacity style={styles.button} onPress={handleUpdateEmail}>
-            <Text style={styles.buttonText}>
-              {(I18n as any).t("changeEmail")}
-            </Text>
+            <Text style={styles.buttonText}>メールアドレスの変更</Text>
           </TouchableOpacity>
 
-          <Text style={styles.label}>{(I18n as any).t("newPassword")}</Text>
+          <Text style={styles.label}>パスワード</Text>
           <TextInput
             style={styles.input}
-            placeholder={(I18n as any).t("newPassword")}
+            placeholder="新しいパスワード"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -186,32 +181,8 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.button}
             onPress={handleUpdatePassword}
           >
-            <Text style={styles.buttonText}>
-              {(I18n as any).t("changePassword")}
-            </Text>
+            <Text style={styles.buttonText}>パスワードを更新</Text>
           </TouchableOpacity>
-
-          <View style={styles.languageSection}>
-            <Text style={styles.pickerLabel}>
-              {(I18n as any).t("language")}
-            </Text>
-            <Picker
-              selectedValue={language}
-              style={styles.picker}
-              onValueChange={(itemValue: string) => setLanguageState(itemValue)}
-            >
-              <Picker.Item label="English" value="en" />
-              <Picker.Item label="日本語" value="ja" />
-            </Picker>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleSaveLanguage}
-            >
-              <Text style={styles.buttonText}>
-                {(I18n as any).t("updateLanguage")}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -277,23 +248,6 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  languageSection: {
-    width: "100%",
-    marginTop: 25,
-    marginBottom: 0,
-  },
-  pickerLabel: {
-    fontSize: 16,
-    color: "#ffffff",
-    marginBottom: -60,
-  },
-  picker: {
-    width: "100%",
-    height: 140,
-    color: "#333",
-    marginBottom: 40,
-    paddingVertical: 0,
   },
 });
 

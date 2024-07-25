@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,18 +14,43 @@ import { useSelector, useDispatch } from "../store/store";
 import {
   selectTransactions,
   removeTransaction,
+  setTransactions,
 } from "../store/transactionSlice";
 import { Ionicons } from "@expo/vector-icons";
 import client from "../api/sanityClient";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
-import I18n from "../utils/i18n";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
+  const [userId, setUserId] = useState<string | null>(null);
   const transactions = useSelector(selectTransactions);
   const dispatch = useDispatch();
 
   const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await AsyncStorage.getItem("userId");
+      setUserId(id);
+      if (id) {
+        fetchTransactions(id);
+      }
+    };
+    fetchUserId();
+  }, []);
+
+  const fetchTransactions = async (userId: string) => {
+    try {
+      const result = await client.fetch(
+        `*[_type == "transaction" && userId._ref == $userId] | order(date desc)`,
+        { userId }
+      );
+      dispatch(setTransactions(result));
+    } catch (error) {
+      console.error("Failed to fetch transactions", error);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -33,13 +58,13 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       dispatch(removeTransaction(id));
       Toast.show({
         type: "success",
-        text1: (I18n as any).t("successDelete"),
+        text1: "削除しました",
       });
     } catch (error) {
       console.error("Failed to delete transaction", error);
       Toast.show({
         type: "error",
-        text1: (I18n as any).t("error"),
+        text1: "エラー",
       });
     }
   };
@@ -56,9 +81,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         contentContainerStyle={styles.drawerContent}
       >
         <View style={styles.transactionContainer}>
-          <Text style={styles.transactionTitle}>
-            {(I18n as any).t("addedToday")}
-          </Text>
+          <Text style={styles.transactionTitle}>本日追加したもの</Text>
           <ScrollView>
             {transactions
               .filter((transaction) => transaction.date.split("T")[0] === today)

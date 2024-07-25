@@ -12,7 +12,7 @@ import client from "../api/sanityClient";
 import { LinearGradient } from "expo-linear-gradient";
 import moment from "moment";
 import TransactionDetailModal from "../components/TransactionDetailModal";
-import I18n from "../utils/i18n";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Transaction = {
   _id: string;
@@ -33,6 +33,8 @@ const DailyScreen = () => {
   const [viewMode, setViewMode] = useState<"daily" | "monthly">("daily");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const dispatch = useDispatch();
   const transactions: Transaction[] = useSelector(
     (state) => state.transaction.transactions
@@ -63,17 +65,28 @@ const DailyScreen = () => {
   );
 
   useEffect(() => {
-    fetchTransactions();
+    const fetchUserId = async () => {
+      const id = await AsyncStorage.getItem("userId");
+      setUserId(id);
+      if (id) {
+        fetchTransactions(id);
+      } else {
+        setError("ユーザーIDが見つかりません");
+      }
+    };
+    fetchUserId();
   }, []);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (userId: string) => {
     try {
       const result = await client.fetch(
-        '*[_type == "transaction"] | order(date desc)'
+        `*[_type == "transaction" && userId._ref == $userId] | order(date desc)`,
+        { userId }
       );
       dispatch(setTransactions(result));
     } catch (error) {
       console.error("Failed to fetch transactions", error);
+      setError("支出の取得に失敗しました");
     }
   };
 
@@ -99,6 +112,7 @@ const DailyScreen = () => {
       end={{ x: 1, y: 0.06 }}
       style={styles.gradient}
     >
+      {error && <Text style={styles.errorText}>{error}</Text>}
       <View style={styles.switchContainer}>
         <TouchableOpacity
           onPress={() => setViewMode("daily")}
@@ -106,7 +120,7 @@ const DailyScreen = () => {
             viewMode === "daily" ? styles.activeButton : styles.inactiveButton
           }
         >
-          <Text style={styles.buttonText}>{(I18n as any).t("daily")}</Text>
+          <Text style={styles.buttonText}>日別</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setViewMode("monthly")}
@@ -114,13 +128,13 @@ const DailyScreen = () => {
             viewMode === "monthly" ? styles.activeButton : styles.inactiveButton
           }
         >
-          <Text style={styles.buttonText}>{(I18n as any).t("monthly")}</Text>
+          <Text style={styles.buttonText}>月別</Text>
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         {viewMode === "daily" && (
           <>
-            <Text style={styles.title}>{(I18n as any).t("totalDaily")}</Text>
+            <Text style={styles.title}>日別合計</Text>
             {Object.entries(dailySummaries)
               .slice(0, 31)
               .map(([date, total]) => (
@@ -137,7 +151,7 @@ const DailyScreen = () => {
         )}
         {viewMode === "monthly" && (
           <>
-            <Text style={styles.title}>{(I18n as any).t("totalmonthly")}</Text>
+            <Text style={styles.title}>月別合計</Text>
             {Object.entries(monthlySummaries).map(([month, total]) => (
               <View key={month} style={styles.summaryRow}>
                 <Text style={styles.date}>{month}</Text>
@@ -163,6 +177,11 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
   },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    margin: 10,
+  },
   switchContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -170,21 +189,22 @@ const styles = StyleSheet.create({
   },
   activeButton: {
     backgroundColor: "#6495ED",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
     borderRadius: 10,
     marginHorizontal: 5,
   },
   inactiveButton: {
     backgroundColor: "#A4C6FF",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
     borderRadius: 10,
     marginHorizontal: 5,
   },
   buttonText: {
     color: "#ffffff",
     fontWeight: "bold",
+    fontSize: 20,
   },
   container: {
     flexGrow: 1,
@@ -221,7 +241,7 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontSize: 16,
-    color: "#333",
+    color: "#FF69A3",
   },
 });
 

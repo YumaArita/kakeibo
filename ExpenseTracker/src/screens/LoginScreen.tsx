@@ -19,7 +19,7 @@ import { RootStackParamList } from "../types";
 import { useDispatch } from "react-redux";
 import { setLogin } from "../store/userSlice";
 import { LinearGradient } from "expo-linear-gradient";
-import I18n from "../utils/i18n";
+import SHA256 from "crypto-js/sha256";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -34,26 +34,30 @@ type Props = {
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useDispatch();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      setError((I18n as any).t("enterFields"));
+    if (!email || !password) {
+      setError("すべてのフィールドに入力してください");
       return;
     }
-    console.log("Attempting login with:", username);
+    console.log("Attempting login with:", email);
     try {
-      const query = `*[_type == "user" && username == $username && password == $password]`;
-      const params = { username, password };
-      console.log("Fetching user with params:", params);
+      const hashedPassword = SHA256(password).toString();
+      const query = `*[_type == "user" && email == $email && password == $password][0]`;
+      const params = { email, password: hashedPassword };
+      console.log("Fetching user with params:", {
+        email,
+        password: "********",
+      });
       const result = await sanityClient.fetch(query, params);
       console.log("Login result:", result);
-      if (result.length > 0) {
+      if (result) {
         await AsyncStorage.setItem("userToken", "yourGeneratedTokenHere");
-        await AsyncStorage.setItem("userId", result[0]._id);
-        dispatch(setLogin(result[0]));
+        await AsyncStorage.setItem("userId", result._id);
+        dispatch(setLogin(result));
         console.log("Dispatching navigation reset to DrawerNavigator");
         navigation.dispatch(
           CommonActions.reset({
@@ -62,11 +66,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           })
         );
       } else {
-        setError((I18n as any).t("invalidCredentials"));
+        setError("無効なメールアドレスまたはパスワード");
       }
     } catch (err) {
       console.error("An error occurred during login:", err);
-      setError((I18n as any).t("loginError"));
+      setError("ログイン中にエラーが発生しました。");
     }
   };
 
@@ -89,20 +93,22 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           />
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
           <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="#666" />
+            <Ionicons name="mail-outline" size={20} color="#666" />
             <TextInput
               style={styles.input}
-              placeholder={(I18n as any).t("username")}
-              value={username}
-              onChangeText={setUsername}
+              placeholder="メールアドレス"
+              value={email}
+              onChangeText={setEmail}
               placeholderTextColor="#666"
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
           </View>
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#666" />
             <TextInput
               style={styles.input}
-              placeholder={(I18n as any).t("password")}
+              placeholder="パスワード"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -110,14 +116,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>{(I18n as any).t("logIn")}</Text>
+            <Text style={styles.buttonText}>ログイン</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate("Signup")}
             style={{ marginTop: 20 }}
           >
             <Text style={{ color: "#D7EEFF" }}>
-              {(I18n as any).t("noAccount")} {(I18n as any).t("signUp")}
+              アカウントを持っていませんか サインアップ
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -136,9 +142,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
+  header: {
+    fontSize: 32,
+    color: "#ffffff",
+    marginBottom: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
   logo: {
-    width: 170,
-    height: 170,
+    width: 200,
+    height: 200,
     marginBottom: 20,
   },
   errorText: {

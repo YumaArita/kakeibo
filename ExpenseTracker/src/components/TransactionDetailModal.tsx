@@ -8,7 +8,6 @@ import {
   ScrollView,
 } from "react-native";
 import moment from "moment";
-import I18n from "../utils/i18n";
 
 type Transaction = {
   _id: string;
@@ -36,7 +35,7 @@ const TransactionDetailModal: React.FC<Props> = ({
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>
             {moment(date).format("YYYY-MM-DD")}
-            {(I18n as any).t("detailsOf")}
+            の詳細
           </Text>
           <ScrollView>
             {transactions.map((transaction) => (
@@ -49,9 +48,7 @@ const TransactionDetailModal: React.FC<Props> = ({
             ))}
           </ScrollView>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>
-              {(I18n as any).t("close")}
-            </Text>
+            <Text style={styles.closeButtonText}>閉じる</Text>
           </TouchableOpacity>
         </View>
       </View>

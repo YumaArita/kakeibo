@@ -5,7 +5,7 @@ import { store } from "./src/store/store";
 import { Provider } from "react-redux";
 import * as Font from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { setI18nConfig } from "./src/utils/i18n";
+import "react-native-get-random-values";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,7 +21,6 @@ function App() {
   useEffect(() => {
     async function prepare() {
       try {
-        await setI18nConfig();
         await loadFonts();
       } catch (e) {
         console.warn(e);

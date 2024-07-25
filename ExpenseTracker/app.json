@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "expensetracker",
     "name": "ExpenseTracker",
     "slug": "ExpenseTracker",
     "version": "1.0.0",
@@ -12,9 +13,30 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.expensetracker",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["expensetracker"]
+          }
+        ]
+      }
     },
     "android": {
+      "package": "com.yourcompany.expensetracker",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "expensetracker",
+              "host": "verify"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -23,9 +45,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-font",
-      "expo-localization"
-    ]
+    "plugins": ["expo-font", "expo-localization"]
   }
 }

@@ -4,33 +4,23 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Alert,
   StyleSheet,
-  Image,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RouteProp } from "@react-navigation/native";
+import { NavigationProp, ParamListBase } from "@react-navigation/native";
 import client from "../api/sanityClient";
+import { sendVerificationEmail } from "../utils/email";
 import { LinearGradient } from "expo-linear-gradient";
-import I18n from "../utils/i18n";
-
-type RootStackParamList = {
-  Signup: undefined;
-  Login: undefined;
-};
-
-type SignupScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  "Signup"
->;
-type SignupScreenRouteProp = RouteProp<RootStackParamList, "Signup">;
+import SHA256 from "crypto-js/sha256";
+import { enc } from "crypto-js";
+import { generateVerificationToken } from "../utils/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = {
-  navigation: SignupScreenNavigationProp;
-  route: SignupScreenRouteProp;
+  navigation: NavigationProp<ParamListBase>;
 };
 
 const SignupScreen: React.FC<Props> = ({ navigation }) => {
@@ -39,43 +29,54 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
+  const hashedPassword = SHA256(password).toString(enc.Hex);
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const validatePassword = (password: string) => {
-    return password.length >= 8;
-  };
-
   const handleSignup = async () => {
     if (!username || !password || !email) {
-      setError((I18n as any).t("enterFields"));
+      setError("すべてのフィールドに入力してください");
       return;
     }
 
     if (!validateEmail(email)) {
-      setError((I18n as any).t("invalidEmail"));
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      setError((I18n as any).t("shortPassword"));
+      setError("有効なメールアドレスを入力してください");
       return;
     }
 
     try {
-      await client.create({
-        _type: "user",
-        username,
-        password,
-        email,
-      });
+      const existingUsers = await client.fetch(
+        `*[_type == "user" && email == $email]`,
+        { email }
+      );
+      if (existingUsers.length > 0) {
+        setError("このメールアドレスは既に使用されています");
+        return;
+      }
+
+      const verificationToken = await generateVerificationToken(email);
+      await AsyncStorage.setItem(
+        "tempUser",
+        JSON.stringify({
+          username,
+          email,
+          hashedPassword,
+        })
+      );
+      console.log("Sending verification email...");
+      await sendVerificationEmail(email, verificationToken);
+      console.log("Verification email sent.");
+
       setError("");
+      Alert.alert("確認メールを送信しました。メールを確認してください。");
+
       navigation.navigate("Login");
     } catch (err) {
-      setError((I18n as any).t("signupError"));
-      console.error(err);
+      console.error("Error during signup:", err);
+      setError("サインアップ中にエラーが発生しました");
     }
   };
 
@@ -89,59 +90,41 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-          <View style={styles.container}>
-            <Image
-              source={require("../../assets/logo.png")}
-              style={styles.logo}
-            />
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#666" />
-              <TextInput
-                style={styles.input}
-                placeholder={(I18n as any).t("email")}
-                value={email}
-                onChangeText={setEmail}
-                placeholderTextColor="#666"
-              />
-            </View>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#666" />
-              <TextInput
-                style={styles.input}
-                placeholder={(I18n as any).t("username")}
-                value={username}
-                onChangeText={setUsername}
-                placeholderTextColor="#666"
-              />
-            </View>
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" />
-              <TextInput
-                style={styles.input}
-                placeholder={(I18n as any).t("password")}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                placeholderTextColor="#666"
-              />
-            </View>
-            <TouchableOpacity style={styles.button} onPress={handleSignup}>
-              <Text style={styles.buttonText}>{(I18n as any).t("signUp")}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={{ marginTop: 20 }}
-            >
-              <Text style={{ color: "#D7EEFF" }}>
-                {(I18n as any).t("alreadyHaveAccount")}{" "}
-                {(I18n as any).t("logIn")}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <ScrollView contentContainerStyle={styles.container}>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <TextInput
+            style={styles.input}
+            placeholder="ユーザー名"
+            value={username}
+            onChangeText={(text) => {
+              setUsername(text);
+              setError("");
+            }}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="メールアドレス"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              setError("");
+            }}
+            keyboardType="email-address"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="パスワード"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              setError("");
+            }}
+            secureTextEntry
+          />
+          <TouchableOpacity style={styles.button} onPress={handleSignup}>
+            <Text style={styles.buttonText}>サインアップ</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -157,52 +140,48 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+    paddingBottom: 150,
   },
-  logo: {
-    width: 170,
-    height: 170,
+  header: {
+    fontSize: 32,
+    color: "#ffffff",
     marginBottom: 20,
-  },
-  errorText: {
-    color: "red",
-    marginBottom: 10,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    width: "100%",
-    height: 50,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    marginBottom: 10,
-    alignItems: "center",
-    paddingHorizontal: 15,
-    borderRadius: 5,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   input: {
-    flex: 1,
-    height: "100%",
+    width: "100%",
+    padding: 10,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     color: "#333",
-    paddingLeft: 10,
   },
   button: {
     width: "100%",
-    height: 50,
+    padding: 15,
     backgroundColor: "#A4C6FF",
-    justifyContent: "center",
-    alignItems: "center",
     borderRadius: 25,
-    marginTop: 10,
-    borderWidth: 2,
-    borderColor: "#BAD3FF",
+    alignItems: "center",
+    marginVertical: 10,
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    borderWidth: 2,
+    borderColor: "#BAD3FF",
   },
   buttonText: {
+    color: "#ffffff",
     fontSize: 18,
-    color: "#fff",
     fontWeight: "bold",
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 10,
   },
 });
 

@@ -15,8 +15,9 @@
       "*": ["node_modules/*"]
     }
   },
+  "files": ["./node_modules/@types/node/index.d.ts"],
   "typeRoots": ["./src/types", "./node_modules/@types", "./src", "./types"],
-  "include": ["src/**/*", "**/*.ts", "**/*.tsx"],
+  "include": ["src/**/*", "**/*.ts", "**/*.tsx", "react-native-crypto-js.d.ts"],
   "exclude": [
     "node_modules",
     "babel.config.js",

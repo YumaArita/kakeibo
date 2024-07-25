@@ -16,7 +16,7 @@ import { useDispatch, useSelector } from "../store/store";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 import moment from "moment";
-import I18n from "../utils/i18n";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Transaction = {
   _id: string;
@@ -52,8 +52,10 @@ function HomeScreen({ navigation }: Props) {
 
   const fetchTransactions = async () => {
     try {
+      const userId = await AsyncStorage.getItem("userId");
       const result = await client.fetch(
-        '*[_type == "transaction"] | order(date desc)'
+        `*[_type == "transaction" && userId._ref == $userId] | order(date desc)`,
+        { userId }
       );
       dispatch(setTransactions(result));
     } catch (error) {
@@ -76,31 +78,26 @@ function HomeScreen({ navigation }: Props) {
 
   const addTransactionHandler = async () => {
     if (inputValue.trim() === "") {
-      Alert.alert((I18n as any).t("enterAmount"));
+      Alert.alert("金額を入力してください");
       return;
     }
-    const nameToSave =
-      itemName.trim() === "" ? (I18n as any).t("unspecified") : itemName;
+    const nameToSave = itemName.trim() === "" ? "未記入" : itemName;
+    const userId = await AsyncStorage.getItem("userId");
     const transaction = {
       _type: "transaction",
       title: `${nameToSave}: ${inputValue}円`,
       amount: parseInt(inputValue, 10),
       date: new Date().toISOString(),
+      userId: { _type: "reference", _ref: userId },
     };
     try {
       const createdTransaction = await client.create(transaction);
       dispatch(addTransaction(createdTransaction));
-      Toast.show({
-        type: "success",
-        text1: (I18n as any).t("amountAddedSuccess"),
-      });
+      Toast.show({ type: "success", text1: "追加しました" });
       setInputValue("");
       setItemName("");
     } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: (I18n as any).t("amountAddedFailed"),
-      });
+      Toast.show({ type: "error", text1: "追加に失敗しました" });
       console.error("Error adding transaction:", error);
     }
   };
@@ -130,12 +127,12 @@ function HomeScreen({ navigation }: Props) {
         <Text style={styles.date}>{todayDate}</Text>
         <Text style={styles.totalAmount}>¥{Math.floor(totalToday) || 0}</Text>
         <Text style={styles.inputDisplay}>
-          {(I18n as any).t("amountToAdd")}{" "}
+          追加する金額:{" "}
           <Text style={styles.inputValue}>¥{inputValue || 0}</Text>
         </Text>
         <TextInput
           style={styles.input}
-          placeholder={(I18n as any).t("addItemPlaceholder")}
+          placeholder="追加するもの"
           value={itemName}
           onChangeText={setItemName}
           placeholderTextColor="#D7EEFF"
@@ -148,7 +145,7 @@ function HomeScreen({ navigation }: Props) {
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
           >
-            <Text style={styles.buttonText}>{(I18n as any).t("add")}</Text>
+            <Text style={styles.buttonText}>追加</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
