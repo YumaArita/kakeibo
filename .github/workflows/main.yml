@@ -6,33 +6,6 @@ on:
       - main
 
 jobs:
-  build-android:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: "16"
-
-      - name: Install dependencies
-        run: |
-          cd ExpenseTracker
-          npm install --legacy-peer-deps
-
-      - name: Install Expo modules
-        run: |
-          cd ExpenseTracker
-          npx expo install expo-modules-core expo-dev-client
-
-      - name: Build Android
-        run: |
-          cd ExpenseTracker/android
-          ./gradlew assembleRelease
-
   build-ios:
     runs-on: macos-latest
 
@@ -64,6 +37,14 @@ jobs:
         run: |
           cd ExpenseTracker/ios
           pod install
+
+      - name: Decode and install certificates
+        run: |
+          echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > Profile.mobileprovision
+          security import Certificate.p12 -k ~/Library/Keychains/login.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build iOS
         run: |
