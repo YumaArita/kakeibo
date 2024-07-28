@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  View,
   Text,
-  Alert,
   StyleSheet,
-  Animated,
+  ScrollView,
   TouchableOpacity,
   TextInput,
-  ScrollView,
+  Alert,
 } from "react-native";
-import { NavigationProp, ParamListBase } from "@react-navigation/native";
-import NumberPad from "../components/NumberPad";
-import client from "../api/sanityClient";
-import { setTransactions, addTransaction } from "../store/transactionSlice";
 import { useDispatch, useSelector } from "../store/store";
-import Toast from "react-native-toast-message";
+import { addTransaction, setTransactions } from "../store/transactionSlice";
+import client from "../api/sanityClient";
 import { LinearGradient } from "expo-linear-gradient";
-import moment from "moment";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { debounce } from "lodash";
+import NumberPad from "../components/NumberPad";
+import moment from "moment";
+import Toast from "react-native-toast-message";
+import { setSelectedGroup } from "../store/groupSlice";
 
 type Transaction = {
   _id: string;
@@ -26,43 +25,69 @@ type Transaction = {
   date: string;
 };
 
-type Props = {
-  navigation: NavigationProp<ParamListBase>;
-};
-
-function HomeScreen({ navigation }: Props) {
+const HomeScreen: React.FC = () => {
   const [inputValue, setInputValue] = useState("");
   const [itemName, setItemName] = useState("");
+  const selectedGroupId = useSelector((state) => state.group.selectedGroupId);
   const dispatch = useDispatch();
-  const totalToday = useSelector((state) =>
-    state.transaction.transactions.reduce(
-      (sum: number, current: Transaction) => {
-        const isToday = moment(current.date).isSame(new Date(), "day");
-        return isToday ? sum + current.amount : sum;
-      },
-      0
-    )
-  );
-
-  const scaleValue = useRef(new Animated.Value(1)).current;
-  const todayDate = moment().format("MMM DD, YYYY");
+  const transactions = useSelector((state) => state.transaction.transactions);
 
   useEffect(() => {
-    fetchTransactions();
+    if (selectedGroupId) {
+      fetchTransactions(selectedGroupId);
+    }
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    const fetchSelectedGroupId = async () => {
+      let groupId = await AsyncStorage.getItem("selectedGroupId");
+      if (!groupId) {
+        const userId = await AsyncStorage.getItem("userId");
+        if (userId) {
+          const privateGroup = await client.fetch(
+            `*[_type == "group" && userId._ref == $userId && name == "プライベート"][0]`,
+            { userId }
+          );
+          if (privateGroup) {
+            groupId = privateGroup._id;
+            await AsyncStorage.setItem("selectedGroupId", groupId || "");
+          } else {
+            Alert.alert("プライベートグループが見つかりませんでした。");
+          }
+        } else {
+          Alert.alert("ユーザーIDが見つかりませんでした。");
+        }
+      }
+      dispatch(setSelectedGroup(groupId));
+      if (groupId) {
+        fetchTransactions(groupId);
+      }
+    };
+
+    fetchSelectedGroupId();
   }, []);
 
-  const fetchTransactions = async () => {
-    try {
-      const userId = await AsyncStorage.getItem("userId");
-      const result = await client.fetch(
-        `*[_type == "transaction" && userId._ref == $userId] | order(date desc)`,
-        { userId }
-      );
-      dispatch(setTransactions(result));
-    } catch (error) {
-      console.error("Failed to fetch transactions", error);
+  const fetchTransactions = async (groupId: string) => {
+    if (groupId) {
+      try {
+        console.log("Fetching transactions for group ID:", groupId);
+        const result = await client.fetch<Transaction[]>(
+          `*[_type == "transaction" && groupId._ref == $groupId] | order(date desc)`,
+          { groupId }
+        );
+        console.log("Fetched transactions:", result);
+        dispatch(setTransactions(result));
+      } catch (error) {
+        console.error("Failed to fetch transactions", error);
+      }
     }
   };
+
+  useEffect(() => {
+    if (selectedGroupId) {
+      fetchTransactions(selectedGroupId);
+    }
+  }, [selectedGroupId]);
 
   const handleNumberSelect = (item: number | "Clear") => {
     if (item === "Clear") {
@@ -84,45 +109,67 @@ function HomeScreen({ navigation }: Props) {
     }
     const nameToSave = itemName.trim() === "" ? "未記入" : itemName;
     const userId = await AsyncStorage.getItem("userId");
-    const transaction = {
-      _type: "transaction",
-      title: `${nameToSave}: ${inputValue}円`,
-      amount: parseInt(inputValue, 10),
-      date: new Date().toISOString(),
-      userId: { _type: "reference", _ref: userId },
-    };
+    let groupId = await AsyncStorage.getItem("selectedGroupId");
+
+    console.log("User ID:", userId);
+    console.log("Group ID:", groupId);
+
+    if (!userId || !groupId) {
+      Alert.alert("グループIDまたはユーザーIDが見つかりませんでした。");
+      return;
+    }
+
     try {
+      console.log("Fetching group with ID:", groupId);
+      const group = await client.fetch(
+        '*[_type == "group" && _id == $groupId][0]',
+        { groupId }
+      );
+      console.log("Fetched group:", group);
+
+      if (!group) {
+        console.log("Group not found. Creating a new group.");
+        const newGroup = {
+          _type: "group",
+          name: "プライベート",
+          userId: { _type: "reference", _ref: userId },
+        };
+        const createdGroup = await client.create(newGroup);
+        groupId = createdGroup._id;
+        await AsyncStorage.setItem("selectedGroupId", groupId);
+      }
+
+      const user = await client.fetch(
+        '*[_type == "user" && _id == $userId][0]',
+        { userId }
+      );
+      if (!user) {
+        throw new Error("ユーザーが見つかりません");
+      }
+
+      const transaction = {
+        _type: "transaction",
+        title: `${nameToSave}: ${inputValue}円`,
+        amount: parseInt(inputValue, 10),
+        date: new Date().toISOString(),
+        userId: { _type: "reference", _ref: userId },
+        groupId: { _type: "reference", _ref: selectedGroupId },
+      };
+
       const createdTransaction = await client.create(transaction);
       dispatch(addTransaction(createdTransaction));
       Toast.show({ type: "success", text1: "追加しました" });
       setInputValue("");
       setItemName("");
     } catch (error) {
-      Toast.show({ type: "error", text1: "追加に失敗しました" });
       console.error("Error adding transaction:", error);
+      Toast.show({
+        type: "error",
+        text1: "追加に失敗しました",
+        text2:
+          error instanceof Error ? error.message : "不明なエラーが発生しました",
+      });
     }
-  };
-
-  const debouncedAddTransactionHandler = useCallback(
-    debounce(addTransactionHandler, 1000, {
-      leading: true,
-      trailing: false,
-    }),
-    [inputValue, itemName]
-  );
-
-  const handlePressIn = () => {
-    Animated.spring(scaleValue, {
-      toValue: 0.95,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleValue, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
   };
 
   return (
@@ -133,8 +180,15 @@ function HomeScreen({ navigation }: Props) {
       style={styles.gradient}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.date}>{todayDate}</Text>
-        <Text style={styles.totalAmount}>¥{Math.floor(totalToday) || 0}</Text>
+        <Text style={styles.date}>{moment().format("MMM DD, YYYY")}</Text>
+        <Text style={styles.totalAmount}>
+          ¥
+          {transactions
+            .filter((transaction) =>
+              moment(transaction.date).isSame(new Date(), "day")
+            )
+            .reduce((sum, transaction) => sum + transaction.amount, 0)}
+        </Text>
         <Text style={styles.inputDisplay}>
           追加する金額:{" "}
           <Text style={styles.inputValue}>¥{inputValue || 0}</Text>
@@ -147,20 +201,13 @@ function HomeScreen({ navigation }: Props) {
           placeholderTextColor="#D7EEFF"
         />
         <NumberPad onNumberSelect={handleNumberSelect} />
-        <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={debouncedAddTransactionHandler}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-          >
-            <Text style={styles.buttonText}>追加</Text>
-          </TouchableOpacity>
-        </Animated.View>
+        <TouchableOpacity style={styles.button} onPress={addTransactionHandler}>
+          <Text style={styles.buttonText}>追加</Text>
+        </TouchableOpacity>
       </ScrollView>
     </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
   gradient: {

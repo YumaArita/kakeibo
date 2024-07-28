@@ -1,6 +1,5 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
@@ -10,15 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { NavigationProp, ParamListBase } from "@react-navigation/native";
 import client from "../api/sanityClient";
-import { sendVerificationEmail } from "../utils/email";
 import { LinearGradient } from "expo-linear-gradient";
 import SHA256 from "crypto-js/sha256";
 import { enc } from "crypto-js";
 import { generateVerificationToken } from "../utils/auth";
+import { sendVerificationEmail } from "../utils/email";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { debounce } from "lodash";
+import { NavigationProp, ParamListBase } from "@react-navigation/native";
 
 type Props = {
   navigation: NavigationProp<ParamListBase>;
@@ -29,6 +27,7 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [isResendEnabled, setIsResendEnabled] = useState(false);
 
   const hashedPassword = SHA256(password).toString(enc.Hex);
 
@@ -67,27 +66,35 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
           hashedPassword,
         })
       );
-      console.log("Sending verification email...");
       await sendVerificationEmail(email, verificationToken);
-      console.log("Verification email sent.");
 
       setError("");
+      setIsResendEnabled(true);
       Alert.alert("確認メールを送信しました。メールを確認してください。");
-
-      navigation.navigate("Login");
     } catch (err) {
       console.error("Error during signup:", err);
       setError("サインアップ中にエラーが発生しました");
     }
   };
 
-  const debouncedHandleSignup = useCallback(
-    debounce(handleSignup, 1000, {
-      leading: true,
-      trailing: false,
-    }),
-    [username, password, email]
-  );
+  const handleResendEmail = async () => {
+    try {
+      const tempUserString = await AsyncStorage.getItem("tempUser");
+      if (tempUserString) {
+        const tempUser = JSON.parse(tempUserString);
+        const verificationToken = await generateVerificationToken(
+          tempUser.email
+        );
+        await sendVerificationEmail(tempUser.email, verificationToken);
+        Alert.alert("確認メールを再送信しました。メールを確認してください。");
+      } else {
+        Alert.alert("再送信に必要な情報が不足しています。");
+      }
+    } catch (error) {
+      console.error("Error resending verification email:", error);
+      Alert.alert("確認メールの再送信に失敗しました");
+    }
+  };
 
   return (
     <LinearGradient
@@ -131,12 +138,17 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
             }}
             secureTextEntry
           />
-          <TouchableOpacity
-            style={styles.button}
-            onPress={debouncedHandleSignup}
-          >
+          <TouchableOpacity style={styles.button} onPress={handleSignup}>
             <Text style={styles.buttonText}>サインアップ</Text>
           </TouchableOpacity>
+          {isResendEnabled && (
+            <TouchableOpacity
+              style={styles.resendButton}
+              onPress={handleResendEmail}
+            >
+              <Text style={styles.resendButtonText}>確認メールを再送信</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -153,13 +165,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     paddingBottom: 150,
-  },
-  header: {
-    fontSize: 32,
-    color: "#ffffff",
-    marginBottom: 20,
-    fontWeight: "bold",
-    textAlign: "center",
   },
   input: {
     width: "100%",
@@ -190,6 +195,24 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  resendButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#6495ED",
+    borderRadius: 25,
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    borderWidth: 2,
+    borderColor: "#BAD3FF",
+  },
+  resendButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
   },
   errorText: {
     color: "red",

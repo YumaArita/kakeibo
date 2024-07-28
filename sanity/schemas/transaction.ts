@@ -1,24 +1,28 @@
-import {defineField, defineType} from 'sanity'
-
-export default defineType({
-  name: 'transaction', // スキーマ名
-  title: 'Transaction', // 表示名
-  type: 'document', // ドキュメントタイプ
+export default {
+  name: 'transaction',
+  type: 'document',
+  title: 'Transaction',
   fields: [
-    defineField({
+    {
       name: 'title',
+      type: 'string',
       title: 'Title',
-      type: 'string', // 文字列タイプ
-    }),
-    defineField({
+    },
+    {
       name: 'amount',
+      type: 'number',
       title: 'Amount',
-      type: 'number', // 数値タイプ
-    }),
-    defineField({
+    },
+    {
       name: 'date',
+      type: 'datetime',
       title: 'Date',
-      type: 'datetime', // 日時タイプ
-    }),
+    },
+    {
+      name: 'userId',
+      type: 'reference',
+      to: [{type: 'user'}],
+      title: 'User',
+    },
   ],
-})
+}

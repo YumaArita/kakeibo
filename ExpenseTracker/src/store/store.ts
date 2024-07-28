@@ -6,11 +6,13 @@ import {
 } from "react-redux";
 import userReducer from "./userSlice";
 import transactionReducer from "./transactionSlice";
+import groupReducer from "./groupSlice"; // 新しく追加
 
 export const store = configureStore({
   reducer: {
     user: userReducer,
     transaction: transactionReducer,
+    group: groupReducer, // 新しく追加
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
   devTools: process.env.NODE_ENV !== "production",

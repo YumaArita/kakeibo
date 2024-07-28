@@ -8,7 +8,7 @@ export default defineType({
     defineField({
       name: 'month',
       title: 'Month',
-      type: 'string', // format as 'YYYY-MM' to represent the month
+      type: 'string',
     }),
     defineField({
       name: 'totalAmount',
