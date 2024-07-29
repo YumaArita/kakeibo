@@ -65,9 +65,11 @@ jobs:
           cd ExpenseTracker/ios
           pod install
 
-      - name: 証明書のデコードとインストール
+      - name: Decode and install certificates
         run: |
+          set -x
           echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
+          if security list-keychains | grep -q "build.keychain"; then security delete-keychain build.keychain; fi
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
@@ -83,31 +85,13 @@ jobs:
           security list-keychains
           security default-keychain
           security find-identity -v -p codesigning build.keychain
+          set +x
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
 
-      - name: Decode and install certificates
-        run: |
-          echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
-          if security list-keychains | grep -q "build.keychain"; then security delete-keychain build.keychain; fi
-          security create-keychain -p "$CERTIFICATE_PASSWORD" build.keychain
-          security import Certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-keychain-settings -lut 21600 build.keychain
-          security unlock-keychain -p "$CERTIFICATE_PASSWORD" build.keychain
-          security list-keychains -s build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$CERTIFICATE_PASSWORD" build.keychain
-          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > Profile.mobileprovision
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-        env:
-          CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
-
-          
       - name: Build iOS
         run: |
           cd ExpenseTracker
