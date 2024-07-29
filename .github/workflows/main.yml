@@ -76,15 +76,17 @@ jobs:
           security find-identity -v -p codesigning build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security list-keychains
+          security find-identity -v -p codesigning
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-
       - name: Build iOS
         run: |
           cd ExpenseTracker
