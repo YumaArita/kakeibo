@@ -76,6 +76,7 @@ jobs:
           security import Certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-keychain-settings -lut 21600 build.keychain
           security list-keychains -s build.keychain
+          security find-identity -p codesigning -v build.keychain
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
@@ -85,7 +86,6 @@ jobs:
           security list-keychains
           security default-keychain
           security find-identity -v -p codesigning build.keychain
-          set +x
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
