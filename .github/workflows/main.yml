@@ -75,7 +75,7 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security import Certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security list-keychains -d user
-          security find-identity -v -p codesigning build.keychain
+          security find-identity -v -p /usr/bin/codesign build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security list-keychains
