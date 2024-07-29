@@ -68,7 +68,7 @@ jobs:
       - name: Decode and install certificates
         run: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
-          security delete-keychain build.keychain || true
+          if security list-keychains | grep -q "build.keychain"; then security delete-keychain build.keychain; fi
           security create-keychain -p "$CERTIFICATE_PASSWORD" build.keychain
           security import Certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-keychain-settings -lut 21600 build.keychain
