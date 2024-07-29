@@ -87,7 +87,9 @@ jobs:
       - name: Build iOS
         run: |
           cd ExpenseTracker
-          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive
+          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -allowProvisioningUpdates
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Export IPA
         run: |
