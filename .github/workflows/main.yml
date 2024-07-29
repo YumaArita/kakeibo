@@ -65,30 +65,30 @@ jobs:
           cd ExpenseTracker/ios
           pod install
 
-      - name: Decode and install certificates
+      - name: 証明書のデコードとインストール
         run: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
-          security list-keychains -d user
-          security delete-keychain build.keychain || true
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security import Certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -d user
-          security find-identity -v -p /usr/bin/codesign build.keychain
           security set-keychain-settings -lut 21600 build.keychain
+          security list-keychains -s build.keychain
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security list-keychains
-          security find-identity -v -p codesigning
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          # 追加のデバッグ情報
+          security list-keychains
+          security default-keychain
+          security find-identity -v -p codesigning build.keychain
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+
       - name: Decode and install certificates
         run: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
