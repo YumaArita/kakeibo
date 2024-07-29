@@ -18,6 +18,7 @@ export type TabParamList = {
   Home: undefined;
   Daily: undefined;
   Settings: undefined;
+  Group: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

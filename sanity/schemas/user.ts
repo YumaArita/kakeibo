@@ -1,27 +1,32 @@
 export default {
   name: 'user',
-  title: 'User',
   type: 'document',
+  title: 'User',
   fields: [
     {
       name: 'userId',
-      title: 'User ID',
       type: 'string',
+      title: 'User ID',
     },
     {
       name: 'username',
-      title: 'Username',
       type: 'string',
+      title: 'Username',
     },
     {
       name: 'email',
-      title: 'Email',
       type: 'string',
+      title: 'Email',
     },
     {
       name: 'password',
-      title: 'Password',
       type: 'string',
+      title: 'Password',
+    },
+    {
+      name: 'isVerified',
+      type: 'boolean',
+      title: 'Is Verified',
     },
   ],
 }

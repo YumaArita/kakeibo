@@ -1,5 +1,5 @@
 import "react-native-gesture-handler";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { store } from "./src/store/store";
 import { Provider } from "react-redux";
@@ -19,7 +19,6 @@ const loadFonts = () => {
 
 function App() {
   const [appIsReady, setAppIsReady] = useState(false);
-  const toastRef = useRef<any>(null);
 
   useEffect(() => {
     async function prepare() {
@@ -48,7 +47,7 @@ function App() {
   return (
     <Provider store={store}>
       <AppNavigator />
-      <Toast config={toastConfig} ref={(ref) => (toastRef.current = ref)} />
+      <Toast config={toastConfig} />
     </Provider>
   );
 }

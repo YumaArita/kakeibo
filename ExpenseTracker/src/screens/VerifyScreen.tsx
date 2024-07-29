@@ -1,5 +1,5 @@
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import client from "../api/sanityClient";
@@ -30,36 +30,54 @@ const VerifyScreen: React.FC = () => {
   const route = useRoute<VerifyScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
   const { token } = route.params;
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyUser = async () => {
       if (token) {
         console.log("Token received:", token);
         try {
-          const email = verifyToken(token);
-          console.log("Decoded email from token:", email);
-          if (email) {
-            // AsyncStorageから一時的なユーザー情報を取得
+          const decodedEmail = verifyToken(token);
+          console.log("Decoded email from token:", decodedEmail);
+          setEmail(decodedEmail);
+
+          if (decodedEmail) {
             const tempUserString = await AsyncStorage.getItem("tempUser");
             if (tempUserString) {
               const tempUser = JSON.parse(tempUserString);
-              if (tempUser.email === email) {
-                // ユーザーをSanityに登録
+              if (tempUser.email === decodedEmail) {
+                const userId = uuidv4();
                 const newUser: User = {
                   _type: "user",
+                  userId: userId,
                   username: tempUser.username,
                   email: tempUser.email,
                   password: tempUser.hashedPassword,
                   isVerified: true,
-                  userId: uuidv4(),
                 };
 
                 const result = await client.create<User>(newUser);
-                console.log("New user created:", result);
+                console.log(
+                  "New user created:",
+                  JSON.stringify(result, null, 2)
+                );
 
                 if (result && result._id) {
-                  // 一時的なユーザー情報を削除
+                  const newGroup = {
+                    _type: "group",
+                    name: "プライベート",
+                    userId: { _type: "reference", _ref: result._id },
+                  };
+                  console.log("Creating new group with userId:", result._id);
+                  await client.create(newGroup);
+
                   await AsyncStorage.removeItem("tempUser");
+                  await AsyncStorage.setItem("userId", result.userId);
+
+                  console.log(
+                    "User registered successfully. UserId:",
+                    result.userId
+                  );
 
                   console.log("User registered successfully.");
                   Alert.alert(

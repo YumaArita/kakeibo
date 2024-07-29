@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import DailyScreen from "../screens/DailyScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import GroupScreen from "../screens/GroupScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -20,6 +21,8 @@ function MainScreens() {
             iconName = focused ? "calendar" : "calendar-outline";
           } else if (route.name === "Settings") {
             iconName = focused ? "settings" : "settings-outline";
+          } else if (route.name === "Groups") {
+            iconName = focused ? "people" : "people-outline";
           } else {
             iconName = "help-outline";
           }
@@ -58,6 +61,14 @@ function MainScreens() {
         component={DailyScreen}
         options={{
           title: "Monthly",
+          headerShown: false,
+        }}
+      />
+      <Tab.Screen
+        name="Groups"
+        component={GroupScreen}
+        options={{
+          title: "Groups",
           headerShown: false,
         }}
       />
