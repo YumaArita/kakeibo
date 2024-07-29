@@ -68,12 +68,11 @@ jobs:
       - name: Decode and install certificates
         run: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
-          security create-keychain -p "" login.keychain
-          security import Certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-keychain-settings -lut 21600 build.keychain
+          security import Certificate.p12 -k ~/Library/Keychains/login.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-keychain-settings -lut 21600 login.keychain
           security unlock-keychain -p "" login.keychain
-          security list-keychains -s build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+          security list-keychains -s login.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" login.keychain
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
