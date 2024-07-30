@@ -84,6 +84,13 @@ jobs:
           PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
 
+      - name: Configure Apple ID
+        run: |
+          xcrun altool --store-password-in-keychain-item "AC_PASSWORD" -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+
       - name: Build iOS
         run: |
           cd ExpenseTracker
