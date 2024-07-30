@@ -86,10 +86,10 @@ jobs:
 
       - name: Configure Apple ID
         run: |
-          xcrun altool --store-password-in-keychain-item "AC_PASSWORD" -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          xcrun altool --store-password-in-keychain-item "AC_PASSWORD" -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
 
       - name: Build iOS
         run: |
