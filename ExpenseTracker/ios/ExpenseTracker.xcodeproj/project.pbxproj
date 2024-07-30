@@ -20,7 +20,7 @@
     1D60588E0D05DD3D006BFB54 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = AppDelegate.m; sourceTree = "<group>"; };
     1D60588F0D05DD3D006BFB54 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ViewController.m; sourceTree = "<group>"; };
     1D6058900D05DD3D006BFB55 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
-    1D6058910D05DD3D006BFB55 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
+    1D6058910D05DD3D006BFB55 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "ios/ExpenseTracker/Info.plist"; sourceTree = "<group>"; };
     /* End PBXFileReference section */
 
     /* Begin PBXFrameworksBuildPhase section */
