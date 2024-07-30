@@ -65,7 +65,7 @@ jobs:
           cd ExpenseTracker/ios
           pod install
 
-      - name: 証明書のデコードとインストール
+      - name: Decode and Install Certificates and Provisioning Profiles
         run: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
           if security list-keychains | grep -q "build.keychain"; then security delete-keychain build.keychain; fi
@@ -87,7 +87,7 @@ jobs:
       - name: Build iOS
         run: |
           cd ExpenseTracker
-          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -allowProvisioningUpdates
+          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
