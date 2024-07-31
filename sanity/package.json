@@ -9,7 +9,9 @@
     "start": "sanity start",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "deploy-graphql": "sanity graphql deploy"
+    "deploy-graphql": "sanity graphql deploy",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "keywords": [
     "sanity"
@@ -20,10 +22,12 @@
     "@sanity/desk-tool": "^2.36.2",
     "@sanity/schema": "^3.50.0",
     "@sanity/vision": "^3.50.0",
+    "expo": "^51.0.23",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sanity": "^3.50.0",
-    "styled-components": "^6.1.8"
+    "styled-components": "^6.1.8",
+    "react-native": "0.74.3"
   },
   "devDependencies": {
     "@sanity/eslint-config-studio": "^4.0.0",

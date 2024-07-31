@@ -1,7 +1,6 @@
 export default {
   name: 'group',
   type: 'document',
-  title: 'Group',
   fields: [
     {
       name: 'name',
@@ -9,10 +8,14 @@ export default {
       title: 'Group Name',
     },
     {
-      name: 'userId',
+      name: 'owner',
       type: 'reference',
       to: [{type: 'user'}],
-      title: 'User ID',
+    },
+    {
+      name: 'members',
+      type: 'array',
+      of: [{type: 'reference', to: [{type: 'user'}]}],
     },
   ],
 }
