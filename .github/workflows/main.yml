@@ -45,6 +45,11 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Increment build number
+        run: |
+          cd ExpenseTracker/ios
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(($( /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Info.plist) + 1))" Info.plist
+
       - name: Set up environment variables
         run: |
           echo "SANITY_PROJECT_ID=${{ secrets.SANITY_PROJECT_ID }}" >> $GITHUB_ENV
