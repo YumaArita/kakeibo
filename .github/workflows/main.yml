@@ -72,6 +72,11 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/build
           cp $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
 
+      - name: Increment build number
+        run: |
+          cd ExpenseTracker/ios
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(($(PlistBuddy -c 'Print CFBundleVersion' ExpenseTracker/Info.plist) + 1))" ExpenseTracker/Info.plist
+          
       - name: Prebuild Expo project
         run: |
           cd ExpenseTracker
