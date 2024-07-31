@@ -23,6 +23,12 @@ jobs:
           cd ExpenseTracker
           npm install --legacy-peer-deps
 
+      - name: Set up environment variables
+        run: |
+          echo "SANITY_PROJECT_ID=${{ secrets.SANITY_PROJECT_ID }}" >> $GITHUB_ENV
+          echo "SANITY_DATASET=${{ secrets.SANITY_DATASET }}" >> $GITHUB_ENV
+          echo "SANITY_TOKEN=${{ secrets.SANITY_TOKEN }}" >> $GITHUB_ENV
+
       - name: Install Expo modules
         run: |
           cd ExpenseTracker
