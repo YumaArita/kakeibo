@@ -55,9 +55,16 @@ jobs:
           cd ExpenseTracker
           npx expo install expo-modules-core expo-dev-client -- --legacy-peer-deps
 
-      - name: Verify exportOptions.plist file
+      - name: Check exportOptions.plist content and permissions
         run: |
-          ls $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+          ls -la $GITHUB_WORKSPACE/ExpenseTracker/ios/
+          cat $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+          chmod 644 $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+
+      - name: Copy exportOptions.plist
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/build
+          cp $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
 
       - name: Prebuild Expo project
         run: |
@@ -102,9 +109,15 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Debug information
+        run: |
+          pwd
+          ls -R $GITHUB_WORKSPACE
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+
       - name: Export IPA
         run: |
           cd ExpenseTracker
-          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
+          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
