@@ -23,12 +23,6 @@ jobs:
           cd ExpenseTracker
           npm install --legacy-peer-deps
 
-      - name: Set up environment variables
-        run: |
-          echo "SANITY_PROJECT_ID=${{ secrets.SANITY_PROJECT_ID }}" >> $GITHUB_ENV
-          echo "SANITY_DATASET=${{ secrets.SANITY_DATASET }}" >> $GITHUB_ENV
-          echo "SANITY_TOKEN=${{ secrets.SANITY_TOKEN }}" >> $GITHUB_ENV
-
       - name: Install Expo modules
         run: |
           cd ExpenseTracker
@@ -51,6 +45,12 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Set up environment variables
+        run: |
+          echo "SANITY_PROJECT_ID=${{ secrets.SANITY_PROJECT_ID }}" >> $GITHUB_ENV
+          echo "SANITY_DATASET=${{ secrets.SANITY_DATASET }}" >> $GITHUB_ENV
+          echo "SANITY_TOKEN=${{ secrets.SANITY_TOKEN }}" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: |
           cd ExpenseTracker
@@ -64,18 +64,13 @@ jobs:
       - name: Check exportOptions.plist content and permissions
         run: |
           ls -la $GITHUB_WORKSPACE/ExpenseTracker/ios/
-          cat $GITHUB_WORKSPACE/ios/exportOptions.plist
-          chmod 644 $GITHUB_WORKSPACE/ios/exportOptions.plist
+          cat $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+          chmod 644 $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
 
       - name: Copy exportOptions.plist
         run: |
           mkdir -p $GITHUB_WORKSPACE/build
-          cp $GITHUB_WORKSPACE/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
-
-      - name: Increment build number
-        run: |
-          cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(($(PlistBuddy -c 'Print CFBundleVersion' ExpenseTracker/Info.plist) + 1))" ExpenseTracker/Info.plist
+          cp $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
 
       - name: Prebuild Expo project
         run: |
@@ -119,12 +114,6 @@ jobs:
           xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-      - name: Debug information
-        run: |
-          pwd
-          ls -R $GITHUB_WORKSPACE
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
 
       - name: Export IPA
         run: |
