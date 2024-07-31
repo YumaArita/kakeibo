@@ -64,19 +64,19 @@ jobs:
       - name: Check exportOptions.plist content and permissions
         run: |
           ls -la $GITHUB_WORKSPACE/ExpenseTracker/ios/
-          cat $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
-          chmod 644 $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+          cat $GITHUB_WORKSPACE/ios/exportOptions.plist
+          chmod 644 $GITHUB_WORKSPACE/ios/exportOptions.plist
 
       - name: Copy exportOptions.plist
         run: |
           mkdir -p $GITHUB_WORKSPACE/build
-          cp $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
+          cp $GITHUB_WORKSPACE/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
 
       - name: Increment build number
         run: |
           cd ExpenseTracker/ios
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(($(PlistBuddy -c 'Print CFBundleVersion' ExpenseTracker/Info.plist) + 1))" ExpenseTracker/Info.plist
-          
+
       - name: Prebuild Expo project
         run: |
           cd ExpenseTracker
