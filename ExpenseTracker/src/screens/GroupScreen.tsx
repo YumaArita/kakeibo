@@ -7,6 +7,8 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import client from "../api/sanityClient";
 import { getUserId } from "../utils/auth";
@@ -103,6 +105,10 @@ const GroupScreen: React.FC = () => {
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
       Alert.alert("グループ名を入力してください");
+      return;
+    }
+    if (groupName === "プライベート") {
+      Alert.alert("この名前のグループは作成できません");
       return;
     }
     try {
@@ -264,12 +270,14 @@ const GroupScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
         {isSelected && <MaterialIcons name="check" size={24} color="#008BBB" />}
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDeleteGroup(group._id)}
-        >
-          <MaterialIcons name="delete" size={24} color="#B0C4DE" />
-        </TouchableOpacity>
+        {!isPrivate && (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteGroup(group._id)}
+          >
+            <MaterialIcons name="delete" size={24} color="#B0C4DE" />
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -281,52 +289,57 @@ const GroupScreen: React.FC = () => {
       end={{ x: 1, y: 0.06 }}
       style={styles.gradient}
     >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>グループ管理</Text>
-        <View style={styles.groupList}>{groups.map(renderGroupItem)}</View>
-        <TextInput
-          style={styles.input}
-          placeholder="グループ名"
-          value={groupName}
-          onChangeText={setGroupName}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleCreateGroup}>
-          <Text style={styles.buttonText}>グループ作成</Text>
-        </TouchableOpacity>
-        <TextInput
-          style={styles.input}
-          placeholder="ユーザーのメールアドレス"
-          value={inviteEmail}
-          onChangeText={setInviteEmail}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleInviteUser}>
-          <Text style={styles.buttonText}>ユーザー招待</Text>
-        </TouchableOpacity>
-        <View style={styles.invitationList}>
-          <Text style={styles.invitationTitle}>招待されたグループ</Text>
-          {invitations.map((invitation) => (
-            <View key={invitation._id} style={styles.invitationItem}>
-              <Text style={styles.invitationText}>
-                {invitation.groupName} に招待されました
-              </Text>
-              <View style={styles.invitationButtons}>
-                <TouchableOpacity
-                  style={[styles.invitationButton, styles.acceptButton]}
-                  onPress={() => handleAcceptInvitation(invitation)}
-                >
-                  <Text style={styles.invitationButtonText}>参加</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.invitationButton, styles.declineButton]}
-                  onPress={() => handleDeclineInvitation(invitation)}
-                >
-                  <Text style={styles.invitationButtonText}>辞退</Text>
-                </TouchableOpacity>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>グループ管理</Text>
+          <View style={styles.groupList}>{groups.map(renderGroupItem)}</View>
+          <TextInput
+            style={styles.input}
+            placeholder="グループ名"
+            value={groupName}
+            onChangeText={setGroupName}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleCreateGroup}>
+            <Text style={styles.buttonText}>グループ作成</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="ユーザーのメールアドレス"
+            value={inviteEmail}
+            onChangeText={setInviteEmail}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleInviteUser}>
+            <Text style={styles.buttonText}>ユーザー招待</Text>
+          </TouchableOpacity>
+          <View style={styles.invitationList}>
+            <Text style={styles.invitationTitle}>招待されたグループ</Text>
+            {invitations.map((invitation) => (
+              <View key={invitation._id} style={styles.invitationItem}>
+                <Text style={styles.invitationText}>
+                  {invitation.groupName} に招待されました
+                </Text>
+                <View style={styles.invitationButtons}>
+                  <TouchableOpacity
+                    style={[styles.invitationButton, styles.acceptButton]}
+                    onPress={() => handleAcceptInvitation(invitation)}
+                  >
+                    <Text style={styles.invitationButtonText}>参加</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.invitationButton, styles.declineButton]}
+                    onPress={() => handleDeclineInvitation(invitation)}
+                  >
+                    <Text style={styles.invitationButtonText}>辞退</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+            ))}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 };
@@ -451,9 +464,6 @@ const styles = StyleSheet.create({
   selectedGroupName: {
     fontWeight: "bold",
     color: "#2196F3",
-  },
-  privateGroupItem: {
-    backgroundColor: "#FFECB3",
   },
   privateGroupName: {
     fontStyle: "italic",
