@@ -63,12 +63,14 @@ const VerifyScreen: React.FC = () => {
                 );
 
                 if (result && result._id) {
+                  // プライベートグループの作成
                   const newGroup = {
                     _type: "group",
                     name: "プライベート",
-                    userId: { _type: "reference", _ref: result._id },
+                    owner: { _type: "reference", _ref: result._id },
+                    members: [{ _type: "reference", _ref: result._id }],
                   };
-                  console.log("Creating new group with userId:", result._id);
+                  console.log("Creating private group for user:", result._id);
                   await client.create(newGroup);
 
                   await AsyncStorage.removeItem("tempUser");
@@ -79,7 +81,9 @@ const VerifyScreen: React.FC = () => {
                     result.userId
                   );
 
-                  console.log("User registered successfully.");
+                  console.log(
+                    "User registered and private group created successfully."
+                  );
                   Alert.alert(
                     "メールアドレスが確認され、登録が完了しました",
                     "",

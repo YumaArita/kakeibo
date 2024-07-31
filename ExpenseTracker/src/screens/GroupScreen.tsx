@@ -17,12 +17,13 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { setSelectedGroup } from "../store/groupSlice";
-import { MaterialIcons } from "@expo/vector-icons"; // Expoアイコンのインポート
+import { MaterialIcons } from "@expo/vector-icons";
 
 type Group = {
   _id: string;
   name: string;
-  userId: { _type: string; _ref: string | null };
+  owner: { _type: string; _ref: string | null };
+  members: { _type: string; _ref: string | null }[];
 };
 
 type GroupInvitation = {
@@ -54,8 +55,6 @@ const GroupScreen: React.FC = () => {
       if (id) {
         fetchGroups(id);
         fetchInvitations(id);
-        const storedGroupId = await AsyncStorage.getItem("selectedGroupId");
-        setSelectedGroupId(storedGroupId);
       }
     };
     fetchUserId();
@@ -76,10 +75,35 @@ const GroupScreen: React.FC = () => {
     fetchUsername();
   }, [userId]);
 
+  useEffect(() => {
+    const initializeSelectedGroup = async () => {
+      if (groups.length > 0) {
+        const storedGroupId = await AsyncStorage.getItem("selectedGroupId");
+        if (
+          storedGroupId &&
+          groups.some((group) => group._id === storedGroupId)
+        ) {
+          setSelectedGroupId(storedGroupId);
+          dispatch(setSelectedGroup(storedGroupId));
+        } else {
+          const privateGroup = groups.find(
+            (group) => group.name === "プライベート"
+          );
+          if (privateGroup) {
+            setSelectedGroupId(privateGroup._id);
+            dispatch(setSelectedGroup(privateGroup._id));
+            await AsyncStorage.setItem("selectedGroupId", privateGroup._id);
+          }
+        }
+      }
+    };
+    initializeSelectedGroup();
+  }, [groups, dispatch]);
+
   const fetchGroups = async (userId: string) => {
     try {
       const result = await client.fetch<Group[]>(
-        `*[_type == "group" && userId._ref == $userId]`,
+        `*[_type == "group" && ((owner._ref == $userId && $userId in members[]._ref) || ($userId in members[]._ref && owner._ref != $userId))]`,
         { userId }
       );
       setGroups(result);
@@ -115,7 +139,8 @@ const GroupScreen: React.FC = () => {
       const newGroup = {
         _type: "group",
         name: groupName,
-        userId: { _type: "reference", _ref: userId },
+        owner: { _type: "reference", _ref: userId },
+        members: [{ _type: "reference", _ref: userId }],
       };
       const createdGroup = await client.create(newGroup);
       setGroups([...groups, createdGroup]);
@@ -133,6 +158,11 @@ const GroupScreen: React.FC = () => {
       return;
     }
 
+    if (selectedGroupId === getPrivateGroupId()) {
+      Alert.alert("プライベートグループには招待できません");
+      return;
+    }
+
     try {
       const existingUsers = await client.fetch(
         `*[_type == "user" && email == $email]`,
@@ -146,8 +176,9 @@ const GroupScreen: React.FC = () => {
 
       const newInvitation = {
         _type: "groupInvitation",
-        groupId: groups[0]._id,
-        groupName: groups[0].name,
+        groupId: selectedGroupId!,
+        groupName:
+          groups.find((group) => group._id === selectedGroupId)?.name || "",
         invitee: { _type: "reference", _ref: existingUsers[0]._id },
         invitedBy: userId,
       };
@@ -163,12 +194,11 @@ const GroupScreen: React.FC = () => {
 
   const handleAcceptInvitation = async (invitation: GroupInvitation) => {
     try {
-      const updatedGroup = {
-        _type: "group",
-        _id: invitation.groupId,
-        userId: { _type: "reference", _ref: userId },
-      };
-      await client.patch(invitation.groupId).set(updatedGroup).commit();
+      await client
+        .patch(invitation.groupId)
+        .setIfMissing({ members: [] })
+        .insert("after", "members[-1]", [{ _type: "reference", _ref: userId }])
+        .commit();
       await client.delete(invitation._id);
       fetchGroups(userId!);
       fetchInvitations(userId!);
@@ -191,36 +221,69 @@ const GroupScreen: React.FC = () => {
   };
 
   const handleGroupSelect = async (groupId: string | null) => {
+    const keys = await AsyncStorage.getAllKeys();
+    const keysToKeep = keys.filter(
+      (key) => key !== "selectedGroupId" && key !== "userId"
+    );
+    await AsyncStorage.multiRemove(keysToKeep);
+
     await AsyncStorage.setItem("selectedGroupId", groupId || "");
-    dispatch(setSelectedGroup(groupId)); // dispatchを使用
-    setSelectedGroupId(groupId); // ステートを更新
+    dispatch(setSelectedGroup(groupId));
+    setSelectedGroupId(groupId);
     Toast.show({ type: "success", text1: "グループを切り替えました" });
   };
 
   const handleDeleteGroup = async (groupId: string) => {
+    const group = groups.find((group) => group._id === groupId);
+    if (group && group.name === "プライベート") {
+      Alert.alert("プライベートグループからは退出できません");
+      return;
+    }
+
     Alert.alert(
-      "グループ削除",
-      "本当にこのグループを削除しますか？",
+      "グループ退出",
+      "本当にこのグループから退出しますか？",
       [
         {
           text: "キャンセル",
           style: "cancel",
         },
         {
-          text: "削除",
+          text: "退出",
           style: "destructive",
           onPress: async () => {
             try {
-              // グループに関連付けられたトランザクションを削除
-              const transactions = await client.fetch(
-                `*[_type == "transaction" && groupId._ref == $groupId]`,
-                { groupId }
-              );
-              for (const transaction of transactions) {
-                await client.delete(transaction._id);
+              if (group?.owner._ref === userId) {
+                if (group.members.length > 1) {
+                  const newOwner = group.members.find(
+                    (member) => member._ref !== userId
+                  );
+                  if (newOwner) {
+                    await client
+                      .patch(groupId)
+                      .set({
+                        owner: { _type: "reference", _ref: newOwner._ref },
+                      })
+                      .unset([`members[_ref == "${userId}"]`])
+                      .commit();
+                  }
+                } else {
+                  const transactions = await client.fetch(
+                    `*[_type == "transaction" && groupId._ref == $groupId]`,
+                    { groupId }
+                  );
+                  for (const transaction of transactions) {
+                    await client.delete(transaction._id);
+                  }
+                  await client.delete(groupId);
+                }
+              } else {
+                await client
+                  .patch(groupId)
+                  .unset([`members[_ref == "${userId}"]`])
+                  .commit();
               }
 
-              await client.delete(groupId);
               await fetchGroups(userId!);
 
               if (selectedGroupId === groupId) {
@@ -231,12 +294,15 @@ const GroupScreen: React.FC = () => {
                   await handleGroupSelect(null);
                 }
               }
-              Toast.show({ type: "success", text1: "グループを削除しました" });
+              Toast.show({
+                type: "success",
+                text1: "グループから退出しました",
+              });
             } catch (error) {
-              console.error("Failed to delete group", error);
+              console.error("Failed to leave group", error);
               Toast.show({
                 type: "error",
-                text1: "グループの削除に失敗しました",
+                text1: "グループの退出に失敗しました",
               });
             }
           },
@@ -275,7 +341,7 @@ const GroupScreen: React.FC = () => {
             style={styles.deleteButton}
             onPress={() => handleDeleteGroup(group._id)}
           >
-            <MaterialIcons name="delete" size={24} color="#B0C4DE" />
+            <MaterialIcons name="exit-to-app" size={24} color="#B0C4DE" />
           </TouchableOpacity>
         )}
       </View>
