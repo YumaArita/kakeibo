@@ -101,6 +101,6 @@ jobs:
       - name: Export IPA
         run: |
           cd ExpenseTracker
-          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist ios/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
+          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
