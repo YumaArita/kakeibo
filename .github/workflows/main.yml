@@ -48,7 +48,7 @@ jobs:
       - name: Increment build number
         run: |
           cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(($( /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' ExpenseTracker/Info.plist) + 1))" ExpenseTracker/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(($( /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Info.plist) + 1))" Info.plist
 
       - name: Set up environment variables
         run: |
