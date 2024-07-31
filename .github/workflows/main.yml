@@ -55,6 +55,10 @@ jobs:
           cd ExpenseTracker
           npx expo install expo-modules-core expo-dev-client -- --legacy-peer-deps
 
+      - name: Verify exportOptions.plist file
+        run: |
+          ls $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+
       - name: Prebuild Expo project
         run: |
           cd ExpenseTracker
@@ -89,7 +93,7 @@ jobs:
           xcrun altool --store-password-in-keychain-item "AC_PASSWORD" -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
 
       - name: Build iOS
         run: |
