@@ -85,7 +85,11 @@ jobs:
       - name: Manually increment build number
         run: |
           cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" Info.plist
+          if /usr/libexec/PlistBuddy -c "Print CFBundleVersion" Info.plist; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(( $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Info.plist) + 1 ))" Info.plist;
+          else
+            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 2" Info.plist;
+          fi
 
       - name: Verify Info.plist content
         run: |
@@ -149,4 +153,4 @@ jobs:
 
       - name: Upload IPA to App Store Connect
         run: |
-          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}　--verbose
+          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }} --verbose
