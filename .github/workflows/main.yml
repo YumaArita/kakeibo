@@ -82,26 +82,23 @@ jobs:
           cd ExpenseTracker
           npx expo prebuild
 
-      - name: Manually increment build number
+      - name: Increment build number
         run: |
           cd ExpenseTracker/ios
-          if /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist; then
-            currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
-            newVersion=$((currentVersion + 1))
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
-          else
-            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 2" Info.plist
-          fi
+          currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
+          newVersion=$((currentVersion + 1))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
+          echo "Updated build number to $newVersion"
 
       - name: Verify Info.plist content
         run: |
           echo "ios/Info.plist:"
           /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
 
-      - name: Backup Info.plist
+      - name: Check Info.plist before build
         run: |
-          cd ExpenseTracker/ios
-          cp Info.plist Info.plist.bak
+          echo "Info.plist content before build:"
+          cat ExpenseTracker/ios/Info.plist
 
       - name: Install CocoaPods dependencies
         run: |
@@ -134,11 +131,6 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
 
-      - name: Restore Info.plist
-        run: |
-          cd ExpenseTracker/ios
-          cp Info.plist.bak Info.plist
-
       - name: Build iOS
         run: |
           cd ExpenseTracker
@@ -152,6 +144,11 @@ jobs:
           xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Check Info.plist after build
+        run: |
+          echo "Info.plist content in IPA:"
+          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker.ipa 'Payload/*.app/Info.plist' | plutil -convert xml1 - -o -
 
       - name: Upload IPA to App Store Connect
         run: |
