@@ -45,16 +45,18 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Check directory structure
+        run: |
+          pwd
+          ls -R ExpenseTracker
+
       - name: Manually increment build number
         run: |
           cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" ExpenseTracker/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" Info.plist
 
       - name: Verify Info.plist content
         run: |
-          echo "ExpenseTracker/Info.plist:"
-          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/ExpenseTracker/Info.plist
           echo "ios/Info.plist:"
           /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
 
