@@ -50,22 +50,6 @@ jobs:
           pwd
           ls -R ExpenseTracker
 
-      - name: Manually increment build number
-        run: |
-          cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" Info.plist
-
-      - name: Verify Info.plist content
-        run: |
-          echo "ios/Info.plist:"
-          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
-
-      - name: Set up environment variables
-        run: |
-          echo "SANITY_PROJECT_ID=${{ secrets.SANITY_PROJECT_ID }}" >> $GITHUB_ENV
-          echo "SANITY_DATASET=${{ secrets.SANITY_DATASET }}" >> $GITHUB_ENV
-          echo "SANITY_TOKEN=${{ secrets.SANITY_TOKEN }}" >> $GITHUB_ENV
-
       - name: Install dependencies
         run: |
           cd ExpenseTracker
@@ -76,21 +60,20 @@ jobs:
           cd ExpenseTracker
           npx expo install expo-modules-core expo-dev-client -- --legacy-peer-deps
 
-      - name: Check exportOptions.plist content and permissions
-        run: |
-          ls -la $GITHUB_WORKSPACE/ExpenseTracker/ios/
-          cat $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
-          chmod 644 $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
-
-      - name: Copy exportOptions.plist
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/build
-          cp $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
-
       - name: Prebuild Expo project
         run: |
           cd ExpenseTracker
           npx expo prebuild
+
+      - name: Increment build number
+        run: |
+          cd ExpenseTracker/ios
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(( $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Info.plist) + 1 ))" Info.plist
+
+      - name: Backup Info.plist
+        run: |
+          cd ExpenseTracker/ios
+          cp Info.plist Info.plist.bak
 
       - name: Install CocoaPods dependencies
         run: |
@@ -123,6 +106,11 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
 
+      - name: Restore Info.plist
+        run: |
+          cd ExpenseTracker/ios
+          cp Info.plist.bak Info.plist
+
       - name: Build iOS
         run: |
           cd ExpenseTracker
@@ -137,11 +125,6 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Check IPA Info.plist
-        run: |
-          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker.ipa 'Payload/*.app/Info.plist' > extracted_Info.plist
-          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" extracted_Info.plist
-
       - name: Upload IPA to App Store Connect
         run: |
-          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}　--verbose
+          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }} --verbose
