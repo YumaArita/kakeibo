@@ -154,12 +154,12 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           unzip ExpenseTracker.ipa -d Payload
 
-      - name: Update Info.plist in IPA
+      - name: Update Info.plist and embed mobile provisioning profile
         run: |
-          cd $GITHUB_WORKSPACE/build/Payload/Payload/*.app
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Info.plist
+          cd $GITHUB_WORKSPACE/build/Payload
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/*.app/Info.plist
           echo "Force set build number to 2 after build"
-          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision ./embedded.mobileprovision
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/*.app/embedded.mobileprovision
 
       - name: Repackage IPA
         run: |
