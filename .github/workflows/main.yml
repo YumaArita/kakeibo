@@ -82,11 +82,17 @@ jobs:
           cd ExpenseTracker
           npx expo prebuild
 
-      - name: Force set build number to 2
+      - name: Increment build number
         run: |
           cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 2" Info.plist
-          echo "Force set build number to 2"
+          if /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist; then
+            currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
+            newVersion=$((currentVersion + 1))
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
+          else
+            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 2" Info.plist
+          fi
+          echo "Updated build number to $newVersion"
 
       - name: Verify Info.plist content
         run: |
@@ -147,6 +153,8 @@ jobs:
         run: |
           echo "Info.plist content in IPA:"
           unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker.ipa 'Payload/*.app/Info.plist' | plutil -convert xml1 - -o -
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Info.plist
+          echo "Force set build number to 2 after build"
 
       - name: Upload IPA to App Store Connect
         run: |
