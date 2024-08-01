@@ -85,19 +85,10 @@ jobs:
       - name: Increment build number
         run: |
           cd ExpenseTracker/ios
-          if /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist; then
-            currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
-            newVersion=$((currentVersion + 1))
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
-          else
-            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 2" Info.plist
-          fi
+          currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
+          newVersion=$((currentVersion + 1))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
           echo "Updated build number to $newVersion"
-
-      - name: Verify Info.plist content
-        run: |
-          echo "ios/Info.plist:"
-          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
 
       - name: Check Info.plist before build
         run: |
@@ -162,10 +153,36 @@ jobs:
           cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/Payload/ExpenseTracker.app/embedded.mobileprovision
           zip -r ExpenseTracker_repackaged.ipa Payload
 
+      - name: Update Info.plist in IPA
+        run: |
+          cd $GITHUB_WORKSPACE/build/Payload/Payload/ExpenseTracker.app
+          currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
+          newVersion=$((currentVersion + 1))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
+          echo "Updated build number in IPA to $newVersion"
+
       - name: Verify repackaged IPA
         run: |
           unzip -l $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa | grep embedded.mobileprovision
 
+      - name: Increment version string
+        run: |
+          cd ExpenseTracker/ios
+          currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Info.plist)
+          IFS='.' read -ra VERSION_PARTS <<< "$currentVersion"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=$((VERSION_PARTS[2] + 1))
+          newVersion="$MAJOR.$MINOR.$PATCH"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $newVersion" Info.plist
+          echo "Updated version string to $newVersion"
+
+      - name: Verify Info.plist content
+        run: |
+          echo "ios/Info.plist:"
+          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
+          /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" ExpenseTracker/ios/Info.plist
+          
       - name: Create and embed dummy provisioning profile if needed
         if: failure()
         run: |
@@ -173,6 +190,11 @@ jobs:
           cp dummy.mobileprovision $GITHUB_WORKSPACE/build/Payload/Payload/ExpenseTracker.app/embedded.mobileprovision
           cd $GITHUB_WORKSPACE/build
           zip -r ExpenseTracker_repackaged.ipa Payload
+
+      - name: Repackage IPA after updating Info.plist
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          zip -r ExpenseTracker_final.ipa Payload
 
       - name: Upload IPA to App Store Connect
         run: |
