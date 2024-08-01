@@ -156,10 +156,10 @@ jobs:
 
       - name: Update Info.plist and embed mobile provisioning profile
         run: |
-          cd $GITHUB_WORKSPACE/build/Payload
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/ExpenseTracker.app/Info.plist
+          cd $GITHUB_WORKSPACE/build/Payload/Payload/ExpenseTracker.app
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Info.plist
           echo "Force set build number to 2 after build"
-          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/ExpenseTracker.app/embedded.mobileprovision
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision embedded.mobileprovision
 
       - name: Repackage IPA
         run: |
@@ -172,16 +172,16 @@ jobs:
           echo "Verifying repackaged IPA content"
           unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/ExpenseTracker.app/Info.plist' | plutil -convert xml1 - -o Info.plist
           cat Info.plist
-          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/ExpenseTracker.app/embedded.mobileprovision' | plutil -convert xml1 - -o embedded.mobileprovision
+          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/ExpenseTracker.app/embedded.mobileprovision' > embedded.mobileprovision
           cat embedded.mobileprovision
 
       - name: Fix provisioning profile if missing
         if: failure()
         run: |
           echo "Fixing provisioning profile and CFBundleVersion"
-          cd $GITHUB_WORKSPACE/build/Payload
-          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/ExpenseTracker.app/embedded.mobileprovision
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/ExpenseTracker.app/Info.plist
+          cd $GITHUB_WORKSPACE/build/Payload/Payload/ExpenseTracker.app
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision embedded.mobileprovision
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Info.plist
 
       - name: Repackage IPA after fix
         if: failure()
