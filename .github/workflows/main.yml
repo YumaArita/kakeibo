@@ -50,21 +50,6 @@ jobs:
           pwd
           ls -R ExpenseTracker
 
-      - name: Manually increment build number
-        run: |
-          cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" Info.plist
-
-      - name: Verify Info.plist content
-        run: |
-          echo "ios/Info.plist:"
-          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
-
-      - name: Backup Info.plist
-        run: |
-          cd ExpenseTracker/ios
-          cp Info.plist Info.plist.bak
-
       - name: Set up environment variables
         run: |
           echo "SANITY_PROJECT_ID=${{ secrets.SANITY_PROJECT_ID }}" >> $GITHUB_ENV
@@ -96,6 +81,21 @@ jobs:
         run: |
           cd ExpenseTracker
           npx expo prebuild
+
+      - name: Manually increment build number
+        run: |
+          cd ExpenseTracker/ios
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" Info.plist
+
+      - name: Verify Info.plist content
+        run: |
+          echo "ios/Info.plist:"
+          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
+
+      - name: Backup Info.plist
+        run: |
+          cd ExpenseTracker/ios
+          cp Info.plist Info.plist.bak
 
       - name: Install CocoaPods dependencies
         run: |
