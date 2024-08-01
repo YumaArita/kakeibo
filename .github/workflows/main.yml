@@ -85,10 +85,20 @@ jobs:
       - name: Increment build number
         run: |
           cd ExpenseTracker/ios
-          currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
-          newVersion=$((currentVersion + 1))
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
-          echo "Updated build number to $newVersion"
+          if [ -f "Info.plist" ]; then
+            if /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist >/dev/null 2>&1; then
+              currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
+              newVersion=$((currentVersion + 1))
+              /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
+              echo "Updated build number to $newVersion"
+            else
+              echo "CFBundleVersion not found. Adding it with initial value 1."
+              /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 1" Info.plist
+            fi
+          else
+            echo "Info.plist not found in ExpenseTracker/ios directory"
+            ls -la
+          fi
 
       - name: Check Info.plist before build
         run: |
