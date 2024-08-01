@@ -85,16 +85,14 @@ jobs:
       - name: Manually increment build number
         run: |
           cd ExpenseTracker/ios
-          if /usr/libexec/PlistBuddy -c "Print CFBundleVersion" Info.plist; then
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(( $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Info.plist) + 1 ))" Info.plist;
-          else
-            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 2" Info.plist;
-          fi
+          currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
+          newVersion=$((currentVersion + 1))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
 
       - name: Verify Info.plist content
         run: |
           echo "ios/Info.plist:"
-          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
+          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" Info.plist
 
       - name: Backup Info.plist
         run: |
