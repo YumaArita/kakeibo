@@ -45,10 +45,18 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Increment build number
+      - name: Manually increment build number
         run: |
           cd ExpenseTracker/ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(($( /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Info.plist) + 1))" Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" ExpenseTracker/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" Info.plist
+
+      - name: Verify Info.plist content
+        run: |
+          echo "ExpenseTracker/Info.plist:"
+          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/ExpenseTracker/Info.plist
+          echo "ios/Info.plist:"
+          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" ExpenseTracker/ios/Info.plist
 
       - name: Set up environment variables
         run: |
@@ -127,6 +135,11 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Check IPA Info.plist
+        run: |
+          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker.ipa 'Payload/*.app/Info.plist' > extracted_Info.plist
+          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" extracted_Info.plist
+
       - name: Upload IPA to App Store Connect
         run: |
-          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
+          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}　--verbose
