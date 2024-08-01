@@ -167,6 +167,35 @@ jobs:
           zip -r ExpenseTracker_repackaged.ipa Payload
           echo "Repackaged IPA with updated Info.plist and provisioning profile"
 
+      - name: Verify repackaged IPA
+        run: |
+          echo "Verifying repackaged IPA content"
+          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/*.app/Info.plist' | plutil -convert xml1 - -o Info.plist
+          cat Info.plist
+          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/*.app/embedded.mobileprovision' | plutil -convert xml1 - -o embedded.mobileprovision
+          cat embedded.mobileprovision
+
+      - name: Fix provisioning profile if missing
+        if: failure()
+        run: |
+          echo "Fixing provisioning profile and CFBundleVersion"
+          cd $GITHUB_WORKSPACE/build/Payload
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/*.app/embedded.mobileprovision
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/*.app/Info.plist
+
+      - name: Repackage IPA after fix
+        if: failure()
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          zip -r ExpenseTracker_repackaged_fixed.ipa Payload
+          echo "Repackaged IPA with updated Info.plist and provisioning profile after fix"
+
       - name: Upload IPA to App Store Connect
         run: |
           xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }} --verbose
+        if: success()
+
+      - name: Upload fixed IPA to App Store Connect
+        if: failure()
+        run: |
+          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged_fixed.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }} --verbose
