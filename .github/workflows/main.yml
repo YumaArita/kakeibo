@@ -157,9 +157,9 @@ jobs:
       - name: Update Info.plist and embed mobile provisioning profile
         run: |
           cd $GITHUB_WORKSPACE/build/Payload
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/ExpenseTracker.app/Info.plist
           echo "Force set build number to 2 after build"
-          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/*.app/embedded.mobileprovision
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/ExpenseTracker.app/embedded.mobileprovision
 
       - name: Repackage IPA
         run: |
@@ -170,9 +170,9 @@ jobs:
       - name: Verify repackaged IPA
         run: |
           echo "Verifying repackaged IPA content"
-          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/*.app/Info.plist' | plutil -convert xml1 - -o Info.plist
+          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/ExpenseTracker.app/Info.plist' | plutil -convert xml1 - -o Info.plist
           cat Info.plist
-          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/*.app/embedded.mobileprovision' | plutil -convert xml1 - -o embedded.mobileprovision
+          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa 'Payload/ExpenseTracker.app/embedded.mobileprovision' | plutil -convert xml1 - -o embedded.mobileprovision
           cat embedded.mobileprovision
 
       - name: Fix provisioning profile if missing
@@ -180,8 +180,8 @@ jobs:
         run: |
           echo "Fixing provisioning profile and CFBundleVersion"
           cd $GITHUB_WORKSPACE/build/Payload
-          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/*.app/embedded.mobileprovision
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/*.app/Info.plist
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/ExpenseTracker.app/embedded.mobileprovision
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/ExpenseTracker.app/Info.plist
 
       - name: Repackage IPA after fix
         if: failure()
