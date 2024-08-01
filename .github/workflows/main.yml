@@ -82,17 +82,11 @@ jobs:
           cd ExpenseTracker
           npx expo prebuild
 
-      - name: Increment build number
+      - name: Force set build number to 2
         run: |
           cd ExpenseTracker/ios
-          if /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist; then
-            currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
-            newVersion=$((currentVersion + 1))
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
-          else
-            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 2" Info.plist
-          fi
-          echo "Updated build number to $newVersion"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Info.plist
+          echo "Force set build number to 2"
 
       - name: Verify Info.plist content
         run: |
