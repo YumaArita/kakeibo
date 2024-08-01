@@ -149,13 +149,23 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Check Info.plist after build
+      - name: Unzip IPA
         run: |
-          echo "Info.plist content in IPA:"
-          unzip -p $GITHUB_WORKSPACE/build/ExpenseTracker.ipa 'Payload/*.app/Info.plist' | plutil -convert xml1 - -o -
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Info.plist
+          cd $GITHUB_WORKSPACE/build
+          unzip ExpenseTracker.ipa -d Payload
+
+      - name: Update Info.plist in IPA
+        run: |
+          cd $GITHUB_WORKSPACE/build/Payload
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Payload/*.app/Info.plist
           echo "Force set build number to 2 after build"
+
+      - name: Repackage IPA
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          zip -r ExpenseTracker_repackaged.ipa Payload
+          echo "Repackaged IPA with updated Info.plist"
 
       - name: Upload IPA to App Store Connect
         run: |
-          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }} --verbose
+          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker_repackaged.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }} --verbose
