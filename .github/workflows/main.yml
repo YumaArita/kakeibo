@@ -8,37 +8,75 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
           node-version: "16"
-      - run: npm install --prefix ExpenseTracker --legacy-peer-deps
-      - run: npx expo install expo-modules-core expo-dev-client --prefix ExpenseTracker
-      - run: ./gradlew assembleRelease
-        working-directory: ExpenseTracker/android
 
+      - name: Install dependencies
+        run: |
+          cd ExpenseTracker
+          npm install --legacy-peer-deps
+      - name: Install Expo modules
+        run: |
+          cd ExpenseTracker
+          npx expo install expo-modules-core expo-dev-client
+      - name: Build Android
+        run: |
+          cd ExpenseTracker/android
+          ./gradlew assembleRelease
   build-ios:
     runs-on: macos-latest
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
           node-version: "18"
-      - run: echo "SANITY_PROJECT_ID=${{ secrets.SANITY_PROJECT_ID }}" >> $GITHUB_ENV
-        run: echo "SANITY_DATASET=${{ secrets.SANITY_DATASET }}" >> $GITHUB_ENV
-        run: echo "SANITY_TOKEN=${{ secrets.SANITY_TOKEN }}" >> $GITHUB_ENV
-      - run: npm install --prefix ExpenseTracker --legacy-peer-deps
-      - run: npx expo install expo-modules-core expo-dev-client --prefix ExpenseTracker
-      - run: npx expo prebuild --no-install --clean --non-interactive --platform ios --prefix ExpenseTracker
-      - run: |
-          pod install --project-directory=ExpenseTracker/ios
-        if: hashFiles('**/Podfile.lock') == ''
-      - run: security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-        env:
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      - run: |
+
+      - name: Install dependencies
+        run: |
+          cd ExpenseTracker
+          npm install --legacy-peer-deps
+      - name: Install Expo modules
+        run: |
+          cd ExpenseTracker
+          npx expo install expo-modules-core expo-dev-client -- --legacy-peer-deps
+      - name: Check exportOptions.plist content and permissions
+        run: |
+          ls -la $GITHUB_WORKSPACE/ExpenseTracker/ios/
+          cat $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+          chmod 644 $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+      - name: Copy exportOptions.plist
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/build
+          cp $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
+      - name: Prebuild Expo project
+        run: |
+          cd ExpenseTracker
+          npx expo prebuild
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ExpenseTracker/ios
+          pod install
+      - name: Decode and Install Certificates and Provisioning Profiles
+        run: |
+          echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
+          if security list-keychains | grep -q "build.keychain"; then security delete-keychain build.keychain; fi
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security import Certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-keychain-settings -lut 21600 build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
@@ -46,8 +84,43 @@ jobs:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
-      - run: xcodebuild -workspace ExpenseTracker/ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+
+      - name: Configure Apple ID
+        run: |
+          xcrun altool --store-password-in-keychain-item "AC_PASSWORD" -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+
+      - name: Increment build number
+        run: |
+          cd ExpenseTracker/ios
+          plistPath="Info.plist" # Adjust this path as necessary
+          currentVersion=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" $plistPath)
+          newVersion=$((currentVersion + 1))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" $plistPath
+          echo "Updated build number to $newVersion"
+
+      - name: Build iOS
+        run: |
+          cd ExpenseTracker
+          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      - run: xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
-      - run: xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/*.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }} --verbose
+
+      - name: Debug information
+        run: |
+          pwd
+          ls -R $GITHUB_WORKSPACE
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+      - name: Export IPA
+        run: |
+          cd ExpenseTracker
+          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload IPA to App Store Connect
+        run: |
+          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
