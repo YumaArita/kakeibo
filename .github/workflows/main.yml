@@ -143,14 +143,14 @@ jobs:
       - name: Build iOS
         run: |
           cd ExpenseTracker
-          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates -UseModernBuildSystem=NO
+          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Export IPA
         run: |
           cd ExpenseTracker
-          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build -UseModernBuildSystem=NO
+          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
@@ -166,14 +166,6 @@ jobs:
           unzip ExpenseTracker.ipa -d Payload
           cp ~/Library/MobileDevice/Provisioning\ Profiles/Profile.mobileprovision Payload/Payload/ExpenseTracker.app/embedded.mobileprovision
           zip -r ExpenseTracker_repackaged.ipa Payload
-
-      - name: Update Info.plist in IPA
-        run: |
-          cd $GITHUB_WORKSPACE/build/Payload/Payload/ExpenseTracker.app
-          currentVersion=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist)
-          newVersion=$((currentVersion + 1))
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" Info.plist
-          echo "Updated build number in IPA to $newVersion"
 
       - name: Verify repackaged IPA
         run: |
