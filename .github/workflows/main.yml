@@ -105,7 +105,7 @@ jobs:
           else
             echo "CFBundleVersion not found. Adding it with initial value 1."
             /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 1" $plistPath
-
+          fi
 
       - name: Build iOS
         run: |
