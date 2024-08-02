@@ -93,20 +93,13 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
 
-      - name: Increment build number
+      - name: Set up Xcode and agvtool
         run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer # Xcodeのバージョンによってパスを調整
           cd ExpenseTracker/ios
-          plistPath="Info.plist"
-          if /usr/libexec/PlistBuddy -c "Print CFBundleVersion" $plistPath >/dev/null 2>&1; then
-            currentVersion=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" $plistPath)
-            newVersion=$((currentVersion + 1))
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $newVersion" $plistPath
-            echo "Updated build number to $newVersion"
-          else
-            echo "CFBundleVersion not found. Adding it with initial value 1."
-            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 1" $plistPath
-          fi
-
+          agvtool next-version -all
+          agvtool new-marketing-version 1.2.3
+          
       - name: Build iOS
         run: |
           cd ExpenseTracker
