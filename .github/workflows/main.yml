@@ -107,7 +107,7 @@ jobs:
 
       - name: Update CFBundleDisplayName
         run: |
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName TBOSET" ExpenseTracker/ios/ExpenseTracker/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName TBOSET" ExpenseTracker/ios/Info.plist
 
       - name: Build iOS
         run: |
