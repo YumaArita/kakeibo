@@ -119,7 +119,7 @@ jobs:
       - name: Build iOS
         run: |
           cd ExpenseTracker
-          xcodebuild -workspace ios/ExpenseTracker.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
+          xcodebuild -workspace ios/TBOSET.xcworkspace -scheme ExpenseTracker -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
@@ -128,6 +128,7 @@ jobs:
           pwd
           ls -R $GITHUB_WORKSPACE
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          
       - name: Export IPA
         run: |
           cd ExpenseTracker
