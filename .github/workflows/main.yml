@@ -98,7 +98,7 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer # Xcodeのバージョンによってパスを調整
           cd ExpenseTracker/ios
           agvtool next-version -all
-          agvtool new-marketing-version 1.2.3
+          agvtool new-marketing-version 1.2.$(date +%s)
           
       - name: Build iOS
         run: |
