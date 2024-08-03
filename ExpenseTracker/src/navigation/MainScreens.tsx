@@ -32,19 +32,19 @@ function MainScreens() {
         tabBarActiveTintColor: "#D0B0FF",
         tabBarInactiveTintColor: "gray",
         tabBarStyle: {
-          backgroundColor: "#FFEEFF", // フッターの背景色を変更
-          borderTopLeftRadius: 20, // 左上の角を丸くする
-          borderTopRightRadius: 20, // 右上の角を丸くする
+          backgroundColor: "#FFEEFF",
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
           borderTopWidth: 1,
           borderColor: "white",
-          position: "absolute", // フッターの位置を絶対位置にする
-          left: 0, // 左側のマージンを削除
-          right: 0, // 右側のマージンを削除
-          bottom: 0, // 下側のマージンを削除
-          height: 70, // フッターの高さ
-          paddingBottom: 10, // 下側のパディング
-          paddingTop: 10, // 上側のパディング
-          elevation: 5, // 影の効果
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
+          elevation: 5,
         },
       })}
     >

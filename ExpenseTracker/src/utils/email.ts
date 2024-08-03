@@ -1,5 +1,4 @@
 import axios from "axios";
-import { generateVerificationToken } from "./auth";
 import Constants from "expo-constants";
 import { SENDGRID_API_KEY, BITLY_ACCESS_TOKEN } from "@env";
 
