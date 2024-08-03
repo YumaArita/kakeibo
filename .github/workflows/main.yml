@@ -51,27 +51,38 @@ jobs:
         run: |
           cd ExpenseTracker
           npm install --legacy-peer-deps
+          
       - name: Install Expo modules
         run: |
           cd ExpenseTracker
           npx expo install expo-modules-core expo-dev-client -- --legacy-peer-deps
+          
       - name: Check exportOptions.plist content and permissions
         run: |
           ls -la $GITHUB_WORKSPACE/ExpenseTracker/ios/
           cat $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
           chmod 644 $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist
+          
       - name: Copy exportOptions.plist
         run: |
           mkdir -p $GITHUB_WORKSPACE/build
           cp $GITHUB_WORKSPACE/ExpenseTracker/ios/exportOptions.plist $GITHUB_WORKSPACE/build/exportOptions.plist
+          
       - name: Prebuild Expo project
         run: |
           cd ExpenseTracker
           npx expo prebuild
+
+      - name: List files in ios directory
+        run: |
+          cd ExpenseTracker
+          ls -R ios
+          
       - name: Install CocoaPods dependencies
         run: |
           cd ExpenseTracker/ios
           pod install
+          
       - name: Decode and Install Certificates and Provisioning Profiles
         run: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > Certificate.p12
