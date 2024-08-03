@@ -37,6 +37,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: List available schemes
+        run: |
+          cd ExpenseTracker
+          xcodebuild -list -workspace ios/TBOSET.xcworkspace
+
       - name: Clear Xcode build cache
         run: |
           sudo rm -rf ~/Library/Developer/Xcode/DerivedData/*
