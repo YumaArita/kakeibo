@@ -99,7 +99,11 @@ jobs:
           cd ExpenseTracker/ios
           agvtool next-version -all
           agvtool new-marketing-version 1.2.$(date +%s)
-          
+
+      - name: Update CFBundleDisplayName
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName TBOSET" ExpenseTracker/ios/ExpenseTracker/Info.plist
+
       - name: Build iOS
         run: |
           cd ExpenseTracker
