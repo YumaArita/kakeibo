@@ -137,9 +137,15 @@ jobs:
       - name: Export IPA
         run: |
           cd ExpenseTracker
-          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
+          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build/ExpenseTracker.ipa
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+
+      - name: Debug information for export
+        run: |
+          ls -R $GITHUB_WORKSPACE/build
+          echo "GITHUB_WORKSPACE build directory contents after export: $GITHUB_WORKSPACE/build"
 
       - name: Upload IPA to App Store Connect
         run: |
