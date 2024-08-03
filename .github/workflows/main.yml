@@ -37,6 +37,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Clear Xcode build cache
+        run: |
+          sudo rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          sudo rm -rf /Users/runner/Library/Developer/Xcode/DerivedData/*
+
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:

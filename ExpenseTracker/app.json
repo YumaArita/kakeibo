@@ -1,7 +1,7 @@
 {
   "expo": {
     "scheme": "expensetracker",
-    "name": "ExpenseTracker",
+    "name": "TBOSET",
     "slug": "ExpenseTracker",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,8 @@
           {
             "CFBundleURLSchemes": ["expensetracker"]
           }
-        ]
+        ],
+        "CFBundleDisplayName": "TBOSET"
       }
     },
     "android": {
