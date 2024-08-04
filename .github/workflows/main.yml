@@ -157,6 +157,15 @@ jobs:
           ls -R $GITHUB_WORKSPACE/build
           echo "GITHUB_WORKSPACE build directory contents after export: $GITHUB_WORKSPACE/build"
 
+      - name: Display RCTModuleMethod.mm content
+        run: |
+          cd ExpenseTracker/node_modules/react-native/React/Base
+          cat RCTModuleMethod.mm
+
+      - name: Display RCTBridge.h content
+        run: |
+          cat $GITHUB_WORKSPACE/ExpenseTracker/node_modules/react-native/React/Base/RCTBridge.h
+
       - name: Upload IPA to App Store Connect
         run: |
           xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/TBOSET.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
