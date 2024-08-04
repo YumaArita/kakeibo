@@ -82,6 +82,12 @@ jobs:
         run: |
           cd ExpenseTracker
           ls -R ios
+
+      - name: Check Xcode project
+        run: |
+          cd ExpenseTracker/ios
+          ls -la
+          xcodebuild -list
           
       - name: Install CocoaPods dependencies
         run: |
@@ -124,7 +130,7 @@ jobs:
       - name: Build iOS
         run: |
           cd ExpenseTracker
-          xcodebuild -workspace ios/TBOSET.xcworkspace -scheme TBOSET -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates
+          xcodebuild -workspace ios/TBOSET.xcworkspace -scheme TBOSET -sdk iphoneos -configuration Release archive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution" PROVISIONING_PROFILE_SPECIFIER="ExpenseTracker Distribution" DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} -allowProvisioningUpdates || (echo "Build failed" && exit 1)
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
@@ -137,9 +143,13 @@ jobs:
       - name: Export IPA
         run: |
           cd ExpenseTracker
-          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build/ExpenseTracker.ipa
+          xcodebuild -exportArchive -archivePath $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive -exportOptionsPlist $GITHUB_WORKSPACE/build/exportOptions.plist -exportPath $GITHUB_WORKSPACE/build
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Check archive contents
+        run: |
+          ls -R $GITHUB_WORKSPACE/build/ExpenseTracker.xcarchive
 
 
       - name: Debug information for export
@@ -149,4 +159,4 @@ jobs:
 
       - name: Upload IPA to App Store Connect
         run: |
-          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/ExpenseTracker.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
+          xcrun altool --upload-app -f $GITHUB_WORKSPACE/build/TBOSET.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APPLE_PASSWORD }}
