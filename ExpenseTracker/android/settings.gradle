@@ -1,4 +1,4 @@
-rootProject.name = 'ExpenseTracker'
+rootProject.name = 'TBOSET'
 
 dependencyResolutionManagement {
   versionCatalogs {
