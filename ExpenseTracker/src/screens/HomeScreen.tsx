@@ -51,7 +51,7 @@ const HomeScreen: React.FC = () => {
             groupId = privateGroup._id;
             await AsyncStorage.setItem("selectedGroupId", groupId || "");
           } else {
-            Alert.alert("プライベートグループが見つかりませんでした。");
+            console.log("プライベートグループが見つかりませんでした。");
           }
         } else {
           Alert.alert("ユーザーIDが見つかりませんでした。");

@@ -6,9 +6,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.KakeiboSimple.ExpenseTracker",
+      "icon": "./assets/icon.png",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
