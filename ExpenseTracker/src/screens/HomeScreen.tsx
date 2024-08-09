@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Text,
   StyleSheet,
@@ -15,7 +15,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NumberPad from "../components/NumberPad";
 import moment from "moment";
 import Toast from "react-native-toast-message";
-import { setSelectedGroup } from "../store/groupSlice";
+import { setSelectedGroup, setSelectedDate } from "../store/groupSlice";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useFocusEffect } from "@react-navigation/native";
 
 type Transaction = {
   _id: string;
@@ -27,15 +29,48 @@ type Transaction = {
 const HomeScreen: React.FC = () => {
   const [inputValue, setInputValue] = useState("");
   const [itemName, setItemName] = useState("");
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [isTransactionLoading, setIsTransactionLoading] = useState(false);
+  const selectedDateStr = useSelector((state) => state.group.selectedDate);
+  const selectedDate = new Date(selectedDateStr);
   const selectedGroupId = useSelector((state) => state.group.selectedGroupId);
   const dispatch = useDispatch();
   const transactions = useSelector((state) => state.transaction.transactions);
+  const today = useMemo(() => moment().startOf("day"), []);
 
-  useEffect(() => {
-    if (selectedGroupId) {
-      fetchTransactions(selectedGroupId);
-    }
-  }, [selectedGroupId]);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(setSelectedDate(today.toISOString()));
+    }, [dispatch, today])
+  );
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) =>
+      moment(transaction.date).isSame(selectedDate, "day")
+    );
+  }, [selectedDate, transactions]);
+
+  const fetchTransactions = useCallback(
+    async (groupId: string) => {
+      if (groupId) {
+        try {
+          setIsTransactionLoading(true);
+          // console.log("Fetching transactions for group ID:", groupId);
+          const result = await client.fetch<Transaction[]>(
+            `*[_type == "transaction" && groupId._ref == $groupId] | order(date desc)`,
+            { groupId }
+          );
+          // console.log("Fetched transactions:", result);
+          dispatch(setTransactions(result));
+        } catch (error) {
+          console.error("Failed to fetch transactions", error);
+        } finally {
+          setIsTransactionLoading(false);
+        }
+      }
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     const fetchSelectedGroupId = async () => {
@@ -64,31 +99,15 @@ const HomeScreen: React.FC = () => {
     };
 
     fetchSelectedGroupId();
-  }, []);
-
-  const fetchTransactions = async (groupId: string) => {
-    if (groupId) {
-      try {
-        console.log("Fetching transactions for group ID:", groupId);
-        const result = await client.fetch<Transaction[]>(
-          `*[_type == "transaction" && groupId._ref == $groupId] | order(date desc)`,
-          { groupId }
-        );
-        console.log("Fetched transactions:", result);
-        dispatch(setTransactions(result));
-      } catch (error) {
-        console.error("Failed to fetch transactions", error);
-      }
-    }
-  };
+  }, [dispatch, fetchTransactions]);
 
   useEffect(() => {
     if (selectedGroupId) {
       fetchTransactions(selectedGroupId);
     }
-  }, [selectedGroupId]);
+  }, [selectedGroupId, fetchTransactions]);
 
-  const handleNumberSelect = (item: number | "Clear") => {
+  const handleNumberSelect = useCallback((item: number | "Clear") => {
     if (item === "Clear") {
       setInputValue("");
     } else {
@@ -99,9 +118,9 @@ const HomeScreen: React.FC = () => {
         return `${prev}${item}`;
       });
     }
-  };
+  }, []);
 
-  const addTransactionHandler = async () => {
+  const addTransactionHandler = useCallback(async () => {
     if (inputValue.trim() === "") {
       Alert.alert("金額を入力してください");
       return;
@@ -110,8 +129,8 @@ const HomeScreen: React.FC = () => {
     const userId = await AsyncStorage.getItem("userId");
     let groupId = await AsyncStorage.getItem("selectedGroupId");
 
-    console.log("User ID:", userId);
-    console.log("Group ID:", groupId);
+    // console.log("User ID:", userId);
+    // console.log("Group ID:", groupId);
 
     if (!userId || !groupId) {
       Alert.alert("グループIDまたはユーザーIDが見つかりませんでした。");
@@ -119,12 +138,12 @@ const HomeScreen: React.FC = () => {
     }
 
     try {
-      console.log("Fetching group with ID:", groupId);
+      // console.log("Fetching group with ID:", groupId);
       const group = await client.fetch(
         '*[_type == "group" && _id == $groupId][0]',
         { groupId }
       );
-      console.log("Fetched group:", group);
+      // console.log("Fetched group:", group);
 
       if (!group) {
         console.log("Group not found. Creating a new group.");
@@ -150,7 +169,7 @@ const HomeScreen: React.FC = () => {
         _type: "transaction",
         title: `${nameToSave}: ${inputValue}円`,
         amount: parseInt(inputValue, 10),
-        date: new Date().toISOString(),
+        date: selectedDate.toISOString(),
         userId: { _type: "reference", _ref: userId },
         groupId: { _type: "reference", _ref: selectedGroupId },
       };
@@ -169,7 +188,35 @@ const HomeScreen: React.FC = () => {
           error instanceof Error ? error.message : "不明なエラーが発生しました",
       });
     }
-  };
+  }, [inputValue, itemName, selectedDate, selectedGroupId, dispatch]);
+
+  const showDatePicker = useCallback(() => {
+    setDatePickerVisibility(true);
+  }, []);
+
+  const hideDatePicker = useCallback(() => {
+    setDatePickerVisibility(false);
+  }, []);
+
+  const handleConfirm = useCallback(
+    (date: Date) => {
+      dispatch(setSelectedDate(date.toISOString()));
+      hideDatePicker();
+    },
+    [dispatch, hideDatePicker]
+  );
+
+  const DateDisplay = useCallback(() => {
+    const isToday = moment(selectedDate).isSame(today, "day");
+    return (
+      <TouchableOpacity onPress={showDatePicker}>
+        <Text style={[styles.date, isToday && styles.todayDate]}>
+          {moment(selectedDate).format("MMM DD, YYYY")}
+          {isToday && " (Today)"}
+        </Text>
+      </TouchableOpacity>
+    );
+  }, [selectedDate, today, showDatePicker]);
 
   return (
     <LinearGradient
@@ -179,14 +226,17 @@ const HomeScreen: React.FC = () => {
       style={styles.gradient}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.date}>{moment().format("MMM DD, YYYY")}</Text>
+        <TouchableOpacity onPress={showDatePicker}>
+          <Text style={styles.date}>
+            {moment(selectedDate).format("MMM DD, YYYY")}
+          </Text>
+        </TouchableOpacity>
         <Text style={styles.totalAmount}>
           ¥
-          {transactions
-            .filter((transaction) =>
-              moment(transaction.date).isSame(new Date(), "day")
-            )
-            .reduce((sum, transaction) => sum + transaction.amount, 0)}
+          {filteredTransactions.reduce(
+            (sum, transaction) => sum + transaction.amount,
+            0
+          )}
         </Text>
         <Text style={styles.inputDisplay}>
           追加する金額:{" "}
@@ -203,6 +253,15 @@ const HomeScreen: React.FC = () => {
         <TouchableOpacity style={styles.button} onPress={addTransactionHandler}>
           <Text style={styles.buttonText}>追加</Text>
         </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+          confirmTextIOS="確定"
+          cancelTextIOS="キャンセル"
+          date={selectedDate}
+        />
       </ScrollView>
     </LinearGradient>
   );
@@ -274,6 +333,10 @@ const styles = StyleSheet.create({
     color: "#BAD3FF",
     marginBottom: 10,
     fontFamily: "CuteFont",
+  },
+  todayDate: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
 });
 
