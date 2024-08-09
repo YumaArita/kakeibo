@@ -22,13 +22,14 @@ import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { debounce } from "lodash";
+import moment from "moment";
 
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const [userId, setUserId] = useState<string | null>(null);
   const transactions = useSelector(selectTransactions);
+  const selectedDateStr = useSelector((state) => state.group.selectedDate);
+  const selectedDate = new Date(selectedDateStr);
   const dispatch = useDispatch();
-
-  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -84,13 +85,20 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         contentContainerStyle={styles.drawerContent}
       >
         <View style={styles.transactionContainer}>
-          <Text style={styles.transactionTitle}>本日追加したもの</Text>
+          <Text style={styles.transactionTitle}>
+            {moment(selectedDate).format("MMM DD, YYYY")}の追加したもの
+          </Text>
           <ScrollView>
             {transactions
-              .filter((transaction) => transaction.date.split("T")[0] === today)
+              .filter((transaction) =>
+                moment(transaction.date).isSame(selectedDate, "day")
+              )
               .slice(0, 10)
-              .map((transaction) => (
-                <View key={transaction._id} style={styles.transactionRow}>
+              .map((transaction, index) => (
+                <View
+                  key={`${transaction._id}-${index}`}
+                  style={styles.transactionRow}
+                >
                   <View style={styles.transactionDetails}>
                     <Text style={styles.transactionItemName}>
                       {transaction.title.split(":")[0]}

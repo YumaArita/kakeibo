@@ -361,6 +361,14 @@ const GroupScreen: React.FC = () => {
       >
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>グループ管理</Text>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={() => fetchInvitations(userId!)}
+          >
+            <MaterialIcons name="refresh" size={24} color="#ffffff" />
+            <Text style={styles.refreshButtonText}>更新</Text>
+          </TouchableOpacity>
+
           <View style={styles.groupList}>{groups.map(renderGroupItem)}</View>
           <TextInput
             style={styles.input}
@@ -533,6 +541,23 @@ const styles = StyleSheet.create({
   },
   privateGroupName: {
     fontStyle: "italic",
+  },
+  refreshButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#6495ED",
+    padding: 10,
+    borderRadius: 25,
+    marginBottom: 20,
+    width: "50%",
+    alignSelf: "center",
+  },
+  refreshButtonText: {
+    marginLeft: 10,
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
