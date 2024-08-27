@@ -16,9 +16,18 @@ import { getUserId } from "../utils/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import SHA256 from "crypto-js/sha256";
 import { debounce } from "lodash";
+import client from "../api/sanityClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = {
   navigation: NavigationProp<ParamListBase>;
+};
+
+type Group = {
+  _id: string;
+  name: string;
+  owner: { _type: string; _ref: string | null };
+  members: { _type: string; _ref: string | null }[];
 };
 
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
@@ -27,6 +36,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [language, setLanguageState] = useState("en");
+  const [groups, setGroups] = useState<Group[]>([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -144,6 +154,94 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     Alert.alert("言語が更新されました");
   };
 
+  const handleDeleteAccount = async () => {
+    if (!userId) {
+      Alert.alert("エラー", "ユーザーIDが見つかりません");
+      return;
+    }
+
+    Alert.alert(
+      "アカウント削除",
+      "本当にアカウントを削除しますか？この操作は取り消せません。",
+      [
+        {
+          text: "キャンセル",
+          style: "cancel",
+        },
+        {
+          text: "削除",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const groups = await client.fetch<Group[]>(
+                `*[_type == "group" && references($userId)]`,
+                { userId }
+              );
+
+              for (const group of groups) {
+                if (group.owner._ref === userId) {
+                  if (group.name === "プライベート") {
+                    const transactions = await client.fetch(
+                      `*[_type == "transaction" && groupId._ref == $groupId]`,
+                      { groupId: group._id }
+                    );
+                    for (const transaction of transactions) {
+                      await client.delete(transaction._id);
+                    }
+                    await client.delete(group._id);
+                  } else {
+                    if (group.members.length > 1) {
+                      const newOwner = group.members.find(
+                        (member) => member._ref !== userId
+                      );
+                      if (newOwner) {
+                        await client
+                          .patch(group._id)
+                          .set({
+                            owner: { _type: "reference", _ref: newOwner._ref },
+                          })
+                          .unset([`members[_ref == "${userId}"]`])
+                          .commit();
+                      }
+                    } else {
+                      await client.delete(group._id);
+                    }
+                  }
+                } else {
+                  await client
+                    .patch(group._id)
+                    .unset([`members[_ref == "${userId}"]`])
+                    .commit();
+                }
+              }
+              await client.delete(userId);
+              await AsyncStorage.clear();
+
+              Alert.alert(
+                "アカウントが削除されました",
+                "ご利用ありがとうございました。",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: "Login" }],
+                      });
+                    },
+                  },
+                ]
+              );
+            } catch (error) {
+              console.error("Failed to delete account:", error);
+              Alert.alert("アカウントの削除に失敗しました");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <LinearGradient
       colors={["#EAD9FF", "#6495ED", "#A4C6FF"]}
@@ -201,6 +299,12 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             onPress={debouncedUpdatePassword}
           >
             <Text style={styles.buttonText}>パスワードを更新</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#FF97C2" }]}
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.buttonText}>アカウントを削除</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

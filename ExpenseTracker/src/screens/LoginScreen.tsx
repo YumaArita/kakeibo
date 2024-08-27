@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    fontFamily: "CuteFont", // Custom font
+    fontFamily: "CuteFont",
     fontSize: 32,
     color: "#ffffff",
     marginBottom: 20,

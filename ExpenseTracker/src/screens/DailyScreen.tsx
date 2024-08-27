@@ -136,6 +136,7 @@ const DailyScreen = () => {
           <>
             <Text style={styles.title}>日別合計</Text>
             {Object.entries(dailySummaries)
+              .sort((a, b) => moment(b[0]).diff(moment(a[0])))
               .slice(0, 31)
               .map(([date, total]) => (
                 <TouchableOpacity
@@ -149,15 +150,18 @@ const DailyScreen = () => {
               ))}
           </>
         )}
+
         {viewMode === "monthly" && (
           <>
             <Text style={styles.title}>月別合計</Text>
-            {Object.entries(monthlySummaries).map(([month, total]) => (
-              <View key={month} style={styles.summaryRow}>
-                <Text style={styles.date}>{month}</Text>
-                <Text style={styles.amount}>¥{total}</Text>
-              </View>
-            ))}
+            {Object.entries(monthlySummaries)
+              .sort((a, b) => moment(b[0]).diff(moment(a[0])))
+              .map(([month, total]) => (
+                <View key={month} style={styles.summaryRow}>
+                  <Text style={styles.date}>{month}</Text>
+                  <Text style={styles.amount}>¥{total}</Text>
+                </View>
+              ))}
           </>
         )}
       </ScrollView>

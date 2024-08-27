@@ -86,7 +86,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       >
         <View style={styles.transactionContainer}>
           <Text style={styles.transactionTitle}>
-            {moment(selectedDate).format("MMM DD, YYYY")}の追加したもの
+            {moment(selectedDate).format("MMM DD, YYYY")}に追加したもの
           </Text>
           <ScrollView>
             {transactions
